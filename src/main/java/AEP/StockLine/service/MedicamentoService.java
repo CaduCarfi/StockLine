@@ -1,4 +1,4 @@
 package AEP.StockLine.service;
 
-public interface MedicamentoService {
+public class MedicamentoService {
 }
