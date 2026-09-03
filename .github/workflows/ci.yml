@@ -29,7 +29,8 @@ jobs:
 
       - name: Wait for MongoDB
         run: |
-          until docker exec medistock-mongo mongosh \
+          until docker exec medistock-mongo \
+            mongosh \
             --username admin \
             --password admin123 \
             --authenticationDatabase admin \
@@ -39,9 +40,14 @@ jobs:
             sleep 2
           done
 
+          echo "MongoDB está pronto!"
+
       - name: Run tests and check coverage
+        env:
+          SPRING_PROFILES_ACTIVE: teste
+          MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
         run: mvn clean test
 
       - name: Stop MongoDB
         if: always()
-        run: docker compose down
+        run: docker compose down -v
