@@ -24,5 +24,24 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Start MongoDB
+        run: docker compose up -d mongodb
+
+      - name: Wait for MongoDB
+        run: |
+          until docker exec medistock-mongo mongosh \
+            --username admin \
+            --password admin123 \
+            --authenticationDatabase admin \
+            --eval "db.adminCommand('ping')" > /dev/null 2>&1
+          do
+            echo "Aguardando MongoDB..."
+            sleep 2
+          done
+
       - name: Run tests and check coverage
         run: mvn clean test
+
+      - name: Stop MongoDB
+        if: always()
+        run: docker compose down
