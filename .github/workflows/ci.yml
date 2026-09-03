@@ -40,12 +40,20 @@ jobs:
             sleep 2
           done
 
-          echo "MongoDB está pronto e autenticado!"
+          echo "MongoDB está pronto!"
+
+      - name: Verify MongoDB authentication
+        run: |
+          docker exec medistock-mongo \
+            mongosh \
+            "mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin" \
+            --eval "db.getSiblingDB('medistock_test').runCommand({ ping: 1 })"
 
       - name: Run tests and check coverage
         env:
           MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
           MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
+          SPRING_PROFILES_ACTIVE: teste
         run: mvn clean test
 
       - name: Stop MongoDB
