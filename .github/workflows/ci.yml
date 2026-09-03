@@ -24,5 +24,38 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Start MongoDB
+        run: docker compose up -d mongodb
+
+      - name: Wait for MongoDB
+        run: |
+          until docker exec medistock-mongo \
+            mongosh \
+            --username admin \
+            --password admin123 \
+            --authenticationDatabase admin \
+            --eval "db.adminCommand('ping')" > /dev/null 2>&1
+          do
+            echo "Aguardando MongoDB..."
+            sleep 2
+          done
+
+          echo "MongoDB está pronto!"
+
+      - name: Verify MongoDB authentication
+        run: |
+          docker exec medistock-mongo \
+            mongosh \
+            "mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin" \
+            --eval "db.getSiblingDB('medistock_test').runCommand({ ping: 1 })"
+
       - name: Run tests and check coverage
+        env:
+          MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
+          MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
+          SPRING_PROFILES_ACTIVE: teste
         run: mvn clean test
+
+      - name: Stop MongoDB
+        if: always()
+        run: docker compose down -v
