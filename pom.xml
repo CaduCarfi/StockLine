@@ -97,7 +97,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-
                 <executions>
 
                     <execution>
@@ -160,7 +159,7 @@
 
                         <configuration>
                             <excludes>
-                                <exclude>**/entity/**</exclude>
+                                <exclude>**/model/**</exclude>
                                 <exclude>**/dto/**</exclude>
                                 <exclude>**/mapper/**</exclude>
                             </excludes>
@@ -175,11 +174,9 @@
                         </goals>
 
                         <configuration>
-
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
-
                                     <limits>
                                         <limit>
                                             <counter>INSTRUCTION</counter>
@@ -191,11 +188,10 @@
                             </rules>
 
                             <excludes>
-                                <exclude>**/entity/**</exclude>
+                                <exclude>**/model/**</exclude>
                                 <exclude>**/dto/**</exclude>
                                 <exclude>**/mapper/**</exclude>
                             </excludes>
-
                         </configuration>
                     </execution>
 
