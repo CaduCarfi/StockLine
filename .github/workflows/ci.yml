@@ -40,11 +40,11 @@ jobs:
             sleep 2
           done
 
-          echo "MongoDB está pronto!"
+          echo "MongoDB está pronto e autenticado!"
 
       - name: Run tests and check coverage
         env:
-          SPRING_PROFILES_ACTIVE: teste
+          MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
           MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
         run: mvn clean test
 
