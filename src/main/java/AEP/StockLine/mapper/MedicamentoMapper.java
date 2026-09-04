@@ -11,6 +11,8 @@ public class MedicamentoMapper {
                 .nome(dto.getNome())
                 .descricao(dto.getDescricao())
                 .quantidade(dto.getQuantidade())
+                .validade(dto.getValidade())
+                .lote(dto.getLote())
                 .build();
     }
 
