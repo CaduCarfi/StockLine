@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 import java.time.LocalDate;
 
@@ -24,4 +23,9 @@ public class MedicamentoRequestDTO {
     @Min(value = 0, message = "A quantidade não pode ser negativa")
     private Integer quantidade;
 
+    @NotNull(message = "A validade é obrigatória")
+    private LocalDate validade;
+
+    @NotBlank(message = "O lote é obrigatório")
+    private String lote;
 }
