@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/medicamentos")
+@RequestMapping("/medicamentos")
 public class MedicamentoController {
 
     private final MedicamentoService service;
@@ -39,7 +39,7 @@ public class MedicamentoController {
     @Operation(summary = "Cadastra um novo medicamento no estoque")
     @PostMapping
     public ResponseEntity<MedicamentoResponseDTO> cadastrar(@RequestBody @Valid MedicamentoRequestDTO request) {
-        MedicamentoResponseDTO medicamentoResponseDTO = medicamentoService.cadastrar(request);
+        MedicamentoResponseDTO medicamentoResponseDTO = service.cadastrar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(medicamentoResponseDTO);
     }
 }

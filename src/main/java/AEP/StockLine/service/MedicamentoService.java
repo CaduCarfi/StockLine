@@ -16,22 +16,21 @@ public class MedicamentoService {
     private final MedicamentoRepository medicamentoRepository;
     private final MedicamentoMapper medicamentoMapper;
 
-    public MedicamentoService(MedicamentoRepository medicamentoRepositoryepository, MedicamentoMapper medicamentoMapper) {
+    public MedicamentoService(MedicamentoRepository medicamentoRepository, MedicamentoMapper medicamentoMapper) {
         this.medicamentoRepository = medicamentoRepository;
-
         this.medicamentoMapper = medicamentoMapper;
     }
 
     public MedicamentoResponseDTO buscarPorId(String id) {
-        return repository.findById(id)
-                .map(MedicamentoMapper::toResponseDTO)
+        return medicamentoRepository.findById(id)
+                .map(medicamentoMapper::toResponseDTO)
                 .orElseThrow(() -> new MedicamentoNotFoundException(id));
     }
 
     public List<MedicamentoResponseDTO> listarTodos() {
-        return repository.findAll()
+        return medicamentoRepository.findAll()
                 .stream()
-                .map(MedicamentoMapper::toResponseDTO)
+                .map(medicamentoMapper::toResponseDTO)
                 .toList();
     }
 
