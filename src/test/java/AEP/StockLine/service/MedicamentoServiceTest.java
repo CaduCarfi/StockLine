@@ -92,7 +92,12 @@ class MedicamentoServiceTest {
                 .quantidade(100)
                 .build();
 
+        MedicamentoResponseDTO responseEsperado = new MedicamentoResponseDTO(
+                "1", "Paracetamol", null, 100, null, null
+        );
+
         when(medicamentoRepository.findById("1")).thenReturn(Optional.of(medicamento));
+        when(medicamentoMapper.toResponseDTO(medicamento)).thenReturn(responseEsperado);
 
         MedicamentoResponseDTO resultado = medicamentoService.buscarPorId("1");
 
@@ -120,7 +125,17 @@ class MedicamentoServiceTest {
                 .nome("Dipirona")
                 .build();
 
+        MedicamentoResponseDTO paracetamolDTO = new MedicamentoResponseDTO(
+                "1", "Paracetamol", null, null, null, null
+        );
+
+        MedicamentoResponseDTO dipironaDTO = new MedicamentoResponseDTO(
+                "2", "Dipirona", null, null, null, null
+        );
+
         when(medicamentoRepository.findAll()).thenReturn(List.of(paracetamol, dipirona));
+        when(medicamentoMapper.toResponseDTO(paracetamol)).thenReturn(paracetamolDTO);
+        when(medicamentoMapper.toResponseDTO(dipirona)).thenReturn(dipironaDTO);
 
         List<MedicamentoResponseDTO> resultado = medicamentoService.listarTodos();
 
