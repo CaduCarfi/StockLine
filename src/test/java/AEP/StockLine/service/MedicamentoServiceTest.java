@@ -2,6 +2,7 @@ package AEP.StockLine.service;
 
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
+import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.mapper.MedicamentoMapper;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
@@ -12,8 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,31 +78,11 @@ class MedicamentoServiceTest {
         assertThat(resultado.getId()).isEqualTo("abc123");
         assertThat(resultado.getNome()).isEqualTo("Paracetamol");
         assertThat(resultado.getQuantidade()).isEqualTo(100);
-import AEP.StockLine.dto.MedicamentoResponseDTO;
-import AEP.StockLine.exception.MedicamentoNotFoundException;
-import AEP.StockLine.model.Medicamento;
-import AEP.StockLine.repository.MedicamentoRepository;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
-
-@ExtendWith(MockitoExtension.class)
-class MedicamentoServiceTest {
-
-    @Mock
-    private MedicamentoRepository repository;
-
-    @InjectMocks
-    private MedicamentoService service;
+        verify(medicamentoMapper, times(1)).toEntity(request);
+        verify(medicamentoRepository, times(1)).save(medicamentoParaSalvar);
+        verify(medicamentoMapper, times(1)).toResponseDTO(medicamentoSalvo);
+    }
 
     @Test
     void deveBuscarMedicamentoPorId() {
@@ -108,9 +92,9 @@ class MedicamentoServiceTest {
                 .quantidade(100)
                 .build();
 
-        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        when(medicamentoRepository.findById("1")).thenReturn(Optional.of(medicamento));
 
-        MedicamentoResponseDTO resultado = service.buscarPorId("1");
+        MedicamentoResponseDTO resultado = medicamentoService.buscarPorId("1");
 
         assertThat(resultado.getId()).isEqualTo("1");
         assertThat(resultado.getNome()).isEqualTo("Paracetamol");
@@ -118,9 +102,9 @@ class MedicamentoServiceTest {
 
     @Test
     void deveLancarExcecaoQuandoMedicamentoNaoExistir() {
-        when(repository.findById("999")).thenReturn(Optional.empty());
+        when(medicamentoRepository.findById("999")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.buscarPorId("999"))
+        assertThatThrownBy(() -> medicamentoService.buscarPorId("999"))
                 .isInstanceOf(MedicamentoNotFoundException.class);
     }
 
@@ -136,9 +120,9 @@ class MedicamentoServiceTest {
                 .nome("Dipirona")
                 .build();
 
-        when(repository.findAll()).thenReturn(List.of(paracetamol, dipirona));
+        when(medicamentoRepository.findAll()).thenReturn(List.of(paracetamol, dipirona));
 
-        List<MedicamentoResponseDTO> resultado = service.listarTodos();
+        List<MedicamentoResponseDTO> resultado = medicamentoService.listarTodos();
 
         assertThat(resultado)
                 .extracting(MedicamentoResponseDTO::getNome)
@@ -147,14 +131,8 @@ class MedicamentoServiceTest {
 
     @Test
     void deveRetornarListaVaziaQuandoNaoHouverMedicamentos() {
-        when(repository.findAll()).thenReturn(List.of());
+        when(medicamentoRepository.findAll()).thenReturn(List.of());
 
-        assertThat(service.listarTodos()).isEmpty();
-    }
-}
-
-        verify(medicamentoMapper, times(1)).toEntity(request);
-        verify(medicamentoRepository, times(1)).save(medicamentoParaSalvar);
-        verify(medicamentoMapper, times(1)).toResponseDTO(medicamentoSalvo);
+        assertThat(medicamentoService.listarTodos()).isEmpty();
     }
 }
