@@ -1,6 +1,7 @@
 package AEP.StockLine.service;
 
 import AEP.StockLine.dto.MedicamentoResponseDTO;
+import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
 import org.junit.jupiter.api.Test;
@@ -11,8 +12,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -88,5 +91,41 @@ class MedicamentoServiceTest {
 
         assertThat(resultado).isEmpty();
         verify(repository).findAll();
+    }
+
+    @Test
+    void deveBuscarMedicamentoPorId() {
+        Medicamento medicamento = Medicamento.builder()
+                .id("1")
+                .nome("Paracetamol")
+                .descricao("Analgésico e antitérmico")
+                .quantidade(100)
+                .validade(LocalDate.of(2027, 3, 31))
+                .lote("L001")
+                .build();
+
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+
+        MedicamentoResponseDTO resultado = service.buscarPorId("1");
+
+        assertThat(resultado.getId()).isEqualTo("1");
+        assertThat(resultado.getNome()).isEqualTo("Paracetamol");
+        assertThat(resultado.getDescricao()).isEqualTo("Analgésico e antitérmico");
+        assertThat(resultado.getQuantidade()).isEqualTo(100);
+        assertThat(resultado.getValidade()).isEqualTo(LocalDate.of(2027, 3, 31));
+        assertThat(resultado.getLote()).isEqualTo("L001");
+
+        verify(repository).findById("1");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMedicamentoNaoForEncontrado() {
+        when(repository.findById("999")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.buscarPorId("999"))
+                .isInstanceOf(MedicamentoNotFoundException.class)
+                .hasMessageContaining("999");
+
+        verify(repository).findById("999");
     }
 }
