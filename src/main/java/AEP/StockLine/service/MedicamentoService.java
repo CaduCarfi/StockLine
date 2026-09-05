@@ -2,21 +2,9 @@ package AEP.StockLine.service;
 
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
-import AEP.StockLine.mapper.MedicamentoMapper;
-import AEP.StockLine.model.Medicamento;
-import AEP.StockLine.repository.MedicamentoRepository;
-import org.springframework.stereotype.Service;
-
-@Service
-public class MedicamentoService {
-
-    private final MedicamentoRepository medicamentoRepository;
-    private final MedicamentoMapper medicamentoMapper;
-package AEP.StockLine.service;
-
-import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.mapper.MedicamentoMapper;
+import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
 import org.springframework.stereotype.Service;
 
@@ -25,10 +13,13 @@ import java.util.List;
 @Service
 public class MedicamentoService {
 
-    private final MedicamentoRepository repository;
+    private final MedicamentoRepository medicamentoRepository;
+    private final MedicamentoMapper medicamentoMapper;
 
-    public MedicamentoService(MedicamentoRepository repository) {
-        this.repository = repository;
+    public MedicamentoService(MedicamentoRepository medicamentoRepositoryepository, MedicamentoMapper medicamentoMapper) {
+        this.medicamentoRepository = medicamentoRepository;
+
+        this.medicamentoMapper = medicamentoMapper;
     }
 
     public MedicamentoResponseDTO buscarPorId(String id) {
@@ -42,12 +33,6 @@ public class MedicamentoService {
                 .stream()
                 .map(MedicamentoMapper::toResponseDTO)
                 .toList();
-    }
-}
-
-    public MedicamentoService(MedicamentoRepository medicamentoRepository, MedicamentoMapper medicamentoMapper) {
-        this.medicamentoRepository = medicamentoRepository;
-        this.medicamentoMapper = medicamentoMapper;
     }
 
     public MedicamentoResponseDTO cadastrar(MedicamentoRequestDTO request) {

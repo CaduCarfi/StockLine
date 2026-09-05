@@ -1,5 +1,6 @@
 package AEP.StockLine.controller;
 
+import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.service.MedicamentoService;
@@ -75,5 +76,35 @@ class MedicamentoControllerTest {
 
         assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resposta.getBody()).isEmpty();
+    }
+
+    @Test
+    void deveCadastrarMedicamentoComSucesso() {
+        MedicamentoRequestDTO request = new MedicamentoRequestDTO(
+                "Paracetamol",
+                "Analgésico e antitérmico",
+                100,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        MedicamentoResponseDTO responseEsperado = new MedicamentoResponseDTO(
+                "abc123",
+                "Paracetamol",
+                "Analgésico e antitérmico",
+                100,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        when(service.cadastrar(request)).thenReturn(responseEsperado);
+
+        ResponseEntity<MedicamentoResponseDTO> resposta = controller.cadastrar(request);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(resposta.getBody()).isNotNull();
+        assertThat(resposta.getBody().getId()).isEqualTo("abc123");
+        assertThat(resposta.getBody().getNome()).isEqualTo("Paracetamol");
+        assertThat(resposta.getBody().getQuantidade()).isEqualTo(100);
     }
 }

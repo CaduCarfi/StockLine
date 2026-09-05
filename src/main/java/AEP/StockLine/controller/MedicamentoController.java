@@ -23,6 +23,7 @@ public class MedicamentoController {
     public MedicamentoController(MedicamentoService service) {
         this.service = service;
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {
         return ResponseEntity.ok(service.buscarPorId(id));
@@ -31,12 +32,6 @@ public class MedicamentoController {
     @GetMapping
     public ResponseEntity<List<MedicamentoResponseDTO>> listar() {
         return ResponseEntity.ok(service.listarTodos());
-    }
-
-    private final MedicamentoService medicamentoService;
-
-    public MedicamentoController(MedicamentoService medicamentoService) {
-        this.medicamentoService = medicamentoService;
     }
 
     @Operation(summary = "Cadastra um novo medicamento no estoque")
