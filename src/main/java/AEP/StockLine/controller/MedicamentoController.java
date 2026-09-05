@@ -4,6 +4,7 @@ import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.service.MedicamentoService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,5 +23,10 @@ public class MedicamentoController {
     @GetMapping
     public ResponseEntity<List<MedicamentoResponseDTO>> listar() {
         return ResponseEntity.ok(service.listarTodos());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {
+        return ResponseEntity.ok(service.buscarPorId(id));
     }
 }

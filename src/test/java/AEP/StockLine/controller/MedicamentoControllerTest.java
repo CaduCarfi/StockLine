@@ -1,6 +1,7 @@
 package AEP.StockLine.controller;
 
 import AEP.StockLine.dto.MedicamentoResponseDTO;
+import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.service.MedicamentoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,5 +68,40 @@ class MedicamentoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void deveRetornar200ComOMedicamentoQuandoOIdExistir() throws Exception {
+        MedicamentoResponseDTO paracetamol = new MedicamentoResponseDTO(
+                "1",
+                "Paracetamol",
+                "Analgésico e antitérmico",
+                100,
+                LocalDate.of(2027, 3, 31),
+                "L001"
+        );
+
+        when(service.buscarPorId("1")).thenReturn(paracetamol);
+
+        mockMvc.perform(get("/medicamentos/{id}", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.nome").value("Paracetamol"))
+                .andExpect(jsonPath("$.descricao").value("Analgésico e antitérmico"))
+                .andExpect(jsonPath("$.quantidade").value(100))
+                .andExpect(jsonPath("$.validade").value("2027-03-31"))
+                .andExpect(jsonPath("$.lote").value("L001"));
+    }
+
+    @Test
+    void deveRetornar404QuandoOIdNaoExistir() throws Exception {
+        when(service.buscarPorId("999"))
+                .thenThrow(new MedicamentoNotFoundException("999"));
+
+        mockMvc.perform(get("/medicamentos/{id}", "999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.erro").value("Not Found"))
+                .andExpect(jsonPath("$.mensagem").value("Medicamento não encontrado com o id: 999"));
     }
 }
