@@ -74,6 +74,84 @@ class MedicamentoServiceTest {
         assertThat(resultado.getId()).isEqualTo("abc123");
         assertThat(resultado.getNome()).isEqualTo("Paracetamol");
         assertThat(resultado.getQuantidade()).isEqualTo(100);
+import AEP.StockLine.dto.MedicamentoResponseDTO;
+import AEP.StockLine.exception.MedicamentoNotFoundException;
+import AEP.StockLine.model.Medicamento;
+import AEP.StockLine.repository.MedicamentoRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class MedicamentoServiceTest {
+
+    @Mock
+    private MedicamentoRepository repository;
+
+    @InjectMocks
+    private MedicamentoService service;
+
+    @Test
+    void deveBuscarMedicamentoPorId() {
+        Medicamento medicamento = Medicamento.builder()
+                .id("1")
+                .nome("Paracetamol")
+                .quantidade(100)
+                .build();
+
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+
+        MedicamentoResponseDTO resultado = service.buscarPorId("1");
+
+        assertThat(resultado.getId()).isEqualTo("1");
+        assertThat(resultado.getNome()).isEqualTo("Paracetamol");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMedicamentoNaoExistir() {
+        when(repository.findById("999")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.buscarPorId("999"))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveListarTodosOsMedicamentos() {
+        Medicamento paracetamol = Medicamento.builder()
+                .id("1")
+                .nome("Paracetamol")
+                .build();
+
+        Medicamento dipirona = Medicamento.builder()
+                .id("2")
+                .nome("Dipirona")
+                .build();
+
+        when(repository.findAll()).thenReturn(List.of(paracetamol, dipirona));
+
+        List<MedicamentoResponseDTO> resultado = service.listarTodos();
+
+        assertThat(resultado)
+                .extracting(MedicamentoResponseDTO::getNome)
+                .containsExactly("Paracetamol", "Dipirona");
+    }
+
+    @Test
+    void deveRetornarListaVaziaQuandoNaoHouverMedicamentos() {
+        when(repository.findAll()).thenReturn(List.of());
+
+        assertThat(service.listarTodos()).isEmpty();
+    }
+}
 
         verify(medicamentoMapper, times(1)).toEntity(request);
         verify(medicamentoRepository, times(1)).save(medicamentoParaSalvar);
