@@ -6,6 +6,8 @@ import AEP.StockLine.mapper.MedicamentoMapper;
 import AEP.StockLine.repository.MedicamentoRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class MedicamentoService {
 
@@ -19,5 +21,12 @@ public class MedicamentoService {
         return repository.findById(id)
                 .map(MedicamentoMapper::toResponseDTO)
                 .orElseThrow(() -> new MedicamentoNotFoundException(id));
+    }
+
+    public List<MedicamentoResponseDTO> listarTodos() {
+        return repository.findAll()
+                .stream()
+                .map(MedicamentoMapper::toResponseDTO)
+                .toList();
     }
 }
