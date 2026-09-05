@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/medicamentos")
 public class MedicamentoController {
@@ -20,5 +22,10 @@ public class MedicamentoController {
     @GetMapping("/{id}")
     public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {
         return ResponseEntity.ok(service.buscarPorId(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<MedicamentoResponseDTO>> listar() {
+        return ResponseEntity.ok(service.listarTodos());
     }
 }

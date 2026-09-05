@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,5 +48,33 @@ class MedicamentoServiceTest {
 
         assertThatThrownBy(() -> service.buscarPorId("999"))
                 .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveListarTodosOsMedicamentos() {
+        Medicamento paracetamol = Medicamento.builder()
+                .id("1")
+                .nome("Paracetamol")
+                .build();
+
+        Medicamento dipirona = Medicamento.builder()
+                .id("2")
+                .nome("Dipirona")
+                .build();
+
+        when(repository.findAll()).thenReturn(List.of(paracetamol, dipirona));
+
+        List<MedicamentoResponseDTO> resultado = service.listarTodos();
+
+        assertThat(resultado)
+                .extracting(MedicamentoResponseDTO::getNome)
+                .containsExactly("Paracetamol", "Dipirona");
+    }
+
+    @Test
+    void deveRetornarListaVaziaQuandoNaoHouverMedicamentos() {
+        when(repository.findAll()).thenReturn(List.of());
+
+        assertThat(service.listarTodos()).isEmpty();
     }
 }
