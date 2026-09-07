@@ -150,4 +150,78 @@ class MedicamentoServiceTest {
 
         assertThat(medicamentoService.listarTodos()).isEmpty();
     }
+
+    @Test
+    void deveAtualizarMedicamentoComSucesso() {
+        MedicamentoRequestDTO request = new MedicamentoRequestDTO(
+                "Paracetamol 750mg",
+                "Analgésico e antitérmico",
+                200,
+                LocalDate.of(2028, 5, 20),
+                "LOT-2027-001"
+        );
+
+        Medicamento medicamento = Medicamento.builder()
+                .id("abc123")
+                .nome("Paracetamol")
+                .descricao("Analgésico")
+                .quantidade(100)
+                .validade(LocalDate.of(2027, 5, 20))
+                .lote("LOT-2026-001")
+                .build();
+
+        MedicamentoResponseDTO responseEsperado = new MedicamentoResponseDTO(
+                "abc123",
+                "Paracetamol 750mg",
+                "Analgésico e antitérmico",
+                200,
+                LocalDate.of(2028, 5, 20),
+                "LOT-2027-001"
+        );
+
+        when(medicamentoRepository.findById("abc123"))
+                .thenReturn(Optional.of(medicamento));
+
+        when(medicamentoRepository.save(medicamento))
+                .thenReturn(medicamento);
+
+        when(medicamentoMapper.toResponseDTO(medicamento))
+                .thenReturn(responseEsperado);
+
+        MedicamentoResponseDTO resultado =
+                medicamentoService.atualizar(request, "abc123");
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo("abc123");
+        assertThat(resultado.getNome()).isEqualTo("Paracetamol 750mg");
+        assertThat(resultado.getQuantidade()).isEqualTo(200);
+
+        verify(medicamentoRepository, times(1)).findById("abc123");
+        verify(medicamentoMapper, times(1)).updateEntity(medicamento, request);
+        verify(medicamentoRepository, times(1)).save(medicamento);
+        verify(medicamentoMapper, times(1)).toResponseDTO(medicamento);
+    }
+
+    @Test
+    void deveLancarExcecaoAoAtualizarMedicamentoQueNaoExiste() {
+        MedicamentoRequestDTO request = new MedicamentoRequestDTO(
+                "Paracetamol",
+                "Analgésico",
+                100,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        when(medicamentoRepository.findById("999"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                medicamentoService.atualizar(request, "999"))
+                .isInstanceOf(MedicamentoNotFoundException.class)
+                .hasMessage("Medicamento não encontrado com o id: 999");
+
+        verify(medicamentoRepository, times(1)).findById("999");
+        verify(medicamentoRepository, never()).save(any());
+        verify(medicamentoMapper, never()).updateEntity(any(), any());
+    }
 }
