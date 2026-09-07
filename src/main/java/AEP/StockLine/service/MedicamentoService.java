@@ -39,4 +39,16 @@ public class MedicamentoService {
         Medicamento salvo = medicamentoRepository.save(medicamento);
         return medicamentoMapper.toResponseDTO(salvo);
     }
+
+    public MedicamentoResponseDTO atualizar(MedicamentoRequestDTO request, String id) {
+        Medicamento medicamento = medicamentoRepository.findById(id)
+                .orElseThrow(() ->
+                        new MedicamentoNotFoundException(id));
+
+        medicamentoMapper.updateEntity(medicamento, request);
+
+        Medicamento medicamentoAtualizado = medicamentoRepository.save(medicamento);
+
+        return medicamentoMapper.toResponseDTO(medicamentoAtualizado);
+    }
 }

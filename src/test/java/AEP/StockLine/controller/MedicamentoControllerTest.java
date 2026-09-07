@@ -107,4 +107,60 @@ class MedicamentoControllerTest {
         assertThat(resposta.getBody().getNome()).isEqualTo("Paracetamol");
         assertThat(resposta.getBody().getQuantidade()).isEqualTo(100);
     }
+
+    @Test
+    void deveAtualizarMedicamentoComSucesso() {
+        MedicamentoRequestDTO request = new MedicamentoRequestDTO(
+                "Paracetamol 750mg",
+                "Analgésico e antitérmico",
+                200,
+                LocalDate.of(2028, 5, 20),
+                "LOT-2027-001"
+        );
+
+        MedicamentoResponseDTO responseEsperado = new MedicamentoResponseDTO(
+                "abc123",
+                "Paracetamol 750mg",
+                "Analgésico e antitérmico",
+                200,
+                LocalDate.of(2028, 5, 20),
+                "LOT-2027-001"
+        );
+
+        when(service.atualizar(request, "abc123"))
+                .thenReturn(responseEsperado);
+
+        ResponseEntity<MedicamentoResponseDTO> resposta =
+                controller.atualizar("abc123", request);
+
+        assertThat(resposta.getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+
+        assertThat(resposta.getBody()).isNotNull();
+        assertThat(resposta.getBody().getId())
+                .isEqualTo("abc123");
+        assertThat(resposta.getBody().getNome())
+                .isEqualTo("Paracetamol 750mg");
+        assertThat(resposta.getBody().getQuantidade())
+                .isEqualTo(200);
+    }
+
+    @Test
+    void deveLancarExcecaoAoAtualizarMedicamentoQueNaoExiste() {
+        MedicamentoRequestDTO request = new MedicamentoRequestDTO(
+                "Paracetamol",
+                "Analgésico",
+                100,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        when(service.atualizar(request, "999"))
+                .thenThrow(new MedicamentoNotFoundException(
+                        "Medicamento não encontrado"));
+
+        assertThatThrownBy(() ->
+                controller.atualizar("999", request))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+    }
 }
