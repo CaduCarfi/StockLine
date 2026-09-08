@@ -1,5 +1,6 @@
 package AEP.StockLine.controller;
 
+import AEP.StockLine.dto.AjusteQuantidadeRequestDTO;
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.service.MedicamentoService;
@@ -44,6 +45,13 @@ public class MedicamentoController {
     public ResponseEntity<MedicamentoResponseDTO> atualizar(@PathVariable String id,
                                                             @RequestBody @Valid MedicamentoRequestDTO request) {
         MedicamentoResponseDTO medicamentoResponseDTO = service.atualizar(request, id);
+        return ResponseEntity.ok(medicamentoResponseDTO);
+    }
+
+    @Operation(summary = "Ajusta a quantidade de Medicamentos no Estoque")
+    @PatchMapping("/{id}/quantidade")
+    public ResponseEntity<MedicamentoResponseDTO> ajustarQuantidade(@PathVariable String id, @RequestBody @Valid AjusteQuantidadeRequestDTO delta) {
+        MedicamentoResponseDTO medicamentoResponseDTO = service.ajustarQuantidade(id, delta.getDelta());
         return ResponseEntity.ok(medicamentoResponseDTO);
     }
 }

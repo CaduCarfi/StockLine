@@ -1,8 +1,10 @@
 package AEP.StockLine.controller;
 
+import AEP.StockLine.dto.AjusteQuantidadeRequestDTO;
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
+import AEP.StockLine.exception.QuantidadeInvalidaException;
 import AEP.StockLine.service.MedicamentoService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -162,5 +164,48 @@ class MedicamentoControllerTest {
         assertThatThrownBy(() ->
                 controller.atualizar("999", request))
                 .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveAjustarQuantidadeComSucesso() {
+        AjusteQuantidadeRequestDTO request = new AjusteQuantidadeRequestDTO(5);
+
+        MedicamentoResponseDTO responseDTO = new MedicamentoResponseDTO(
+                "1",
+                "Paracetamol",
+                "Analgésico",
+                105,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        when(service.ajustarQuantidade("1", 5)).thenReturn(responseDTO);
+
+        ResponseEntity<MedicamentoResponseDTO> resposta = controller.ajustarQuantidade("1", request);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resposta.getBody().getQuantidade()).isEqualTo(105);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMedicamentoNaoExistirAoAjustarQuantidade() {
+        AjusteQuantidadeRequestDTO request = new AjusteQuantidadeRequestDTO(5);
+
+        when(service.ajustarQuantidade("999", 5))
+                .thenThrow(new MedicamentoNotFoundException("999"));
+
+        assertThatThrownBy(() -> controller.ajustarQuantidade("999", request))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoAjusteResultarEmQuantidadeNegativa() {
+        AjusteQuantidadeRequestDTO request = new AjusteQuantidadeRequestDTO(-5);
+
+        when(service.ajustarQuantidade("999", -5))
+                .thenThrow(new QuantidadeInvalidaException("999", -5));
+
+        assertThatThrownBy(() -> controller.ajustarQuantidade("999", request))
+                .isInstanceOf(QuantidadeInvalidaException.class);
     }
 }
