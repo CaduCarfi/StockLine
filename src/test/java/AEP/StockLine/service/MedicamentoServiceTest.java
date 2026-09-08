@@ -3,6 +3,7 @@ package AEP.StockLine.service;
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
+import AEP.StockLine.exception.QuantidadeInvalidaException;
 import AEP.StockLine.mapper.MedicamentoMapper;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
@@ -223,5 +224,58 @@ class MedicamentoServiceTest {
         verify(medicamentoRepository, times(1)).findById("999");
         verify(medicamentoRepository, never()).save(any());
         verify(medicamentoMapper, never()).updateEntity(any(), any());
+    }
+
+    @Test
+    void deveAjustarQuantidadeComSucesso() {
+        Medicamento medicamento = Medicamento.builder()
+                .id("abc123")
+                .nome("Paracetamol")
+                .quantidade(100)
+                .build();
+
+        when(medicamentoRepository.findById("abc123"))
+                .thenReturn(Optional.of(medicamento));
+        when(medicamentoRepository.save(medicamento))
+                .thenReturn(medicamento);
+
+        MedicamentoResponseDTO responseDTO = new MedicamentoResponseDTO(
+                "abc123",
+                "Paracetamol",
+                "Analgésico",
+                105,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        when(medicamentoMapper.toResponseDTO(medicamento)).thenReturn(responseDTO);
+
+        MedicamentoResponseDTO resultado = medicamentoService.ajustarQuantidade("abc123", 5);
+
+        assertThat(resultado.getQuantidade()).isEqualTo(105);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMedicamentoNaoExistirAoAjustarQuantidade() {
+        when(medicamentoRepository.findById("999"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> medicamentoService.ajustarQuantidade("999", 5))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoAjusteResultarEmQuantidadeNegativa() {
+        Medicamento medicamento = Medicamento.builder()
+                .id("999")
+                .nome("Paracetamol")
+                .quantidade(3)
+                .build();
+
+        when(medicamentoRepository.findById("999"))
+                .thenReturn(Optional.of(medicamento));
+
+        assertThatThrownBy(() -> medicamentoService.ajustarQuantidade("999", -5))
+                .isInstanceOf(QuantidadeInvalidaException.class);
     }
 }
