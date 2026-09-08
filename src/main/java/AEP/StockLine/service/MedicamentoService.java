@@ -3,6 +3,7 @@ package AEP.StockLine.service;
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
+import AEP.StockLine.exception.QuantidadeInvalidaException;
 import AEP.StockLine.mapper.MedicamentoMapper;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
@@ -50,5 +51,21 @@ public class MedicamentoService {
         Medicamento medicamentoAtualizado = medicamentoRepository.save(medicamento);
 
         return medicamentoMapper.toResponseDTO(medicamentoAtualizado);
+    }
+
+    public MedicamentoResponseDTO ajustarQuantidade(String id, Integer delta) {
+        Medicamento medicamento = medicamentoRepository.findById(id)
+                .orElseThrow(() -> new MedicamentoNotFoundException(id));
+
+        int novaQuantidade = medicamento.getQuantidade() + delta;
+
+        if (novaQuantidade < 0) {
+            throw new QuantidadeInvalidaException(id, delta);
+        }
+
+        medicamento.setQuantidade(novaQuantidade);
+
+        Medicamento atualizado = medicamentoRepository.save(medicamento);
+        return medicamentoMapper.toResponseDTO(atualizado);
     }
 }
