@@ -278,4 +278,28 @@ class MedicamentoServiceTest {
         assertThatThrownBy(() -> medicamentoService.ajustarQuantidade("999", -5))
                 .isInstanceOf(QuantidadeInvalidaException.class);
     }
+
+    @Test
+    void deveDeletarMedicamentoComSucesso() {
+        when(medicamentoRepository.existsById("67"))
+                .thenReturn(true);
+
+        medicamentoService.deletar("67");
+
+        verify(medicamentoRepository)
+                .deleteById("67");
+    }
+
+    @Test
+    void deveLancarExcecaoAoDeletarMedicamentoNaoEncontrado() {
+        when(medicamentoRepository.existsById("555"))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> medicamentoService.deletar("555"))
+                .isInstanceOf(MedicamentoNotFoundException.class)
+                .hasMessage("Medicamento não encontrado com o id: 555");
+
+        verify(medicamentoRepository, never())
+                .deleteById("555");
+    }
 }
