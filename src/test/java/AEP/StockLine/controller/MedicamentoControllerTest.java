@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MedicamentoControllerTest {
@@ -207,5 +207,31 @@ class MedicamentoControllerTest {
 
         assertThatThrownBy(() -> controller.ajustarQuantidade("999", request))
                 .isInstanceOf(QuantidadeInvalidaException.class);
+    }
+
+    @Test
+    void deveDeletarMedicamentoComSucesso() {
+        ResponseEntity<Void> resposta = controller.deletar("67");
+
+        assertThat(resposta.getStatusCode())
+                .isEqualTo(HttpStatus.NO_CONTENT);
+
+        assertThat(resposta.getBody())
+                .isNull();
+
+        verify(service).deletar("67");
+    }
+
+    @Test
+    void deveLancarExcecaoAoDeletarMedicamentoQueNaoExiste() {
+        doThrow(new MedicamentoNotFoundException("555"))
+                .when(service)
+                .deletar("555");
+
+        assertThatThrownBy(() -> controller.deletar("555"))
+                .isInstanceOf(MedicamentoNotFoundException.class)
+                .hasMessage("Medicamento não encontrado com o id: 555");
+
+        verify(service).deletar("555");
     }
 }

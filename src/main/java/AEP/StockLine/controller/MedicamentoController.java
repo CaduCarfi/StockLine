@@ -40,7 +40,7 @@ public class MedicamentoController {
     }
 
 
-    @Operation(summary = "Atualiza um medicamento do estoque")
+    @Operation(summary = "Atualiza um Medicamento do Estoque")
     @PutMapping("/{id}")
     public ResponseEntity<MedicamentoResponseDTO> atualizar(@PathVariable String id,
                                                             @RequestBody @Valid MedicamentoRequestDTO request) {
@@ -53,5 +53,12 @@ public class MedicamentoController {
     public ResponseEntity<MedicamentoResponseDTO> ajustarQuantidade(@PathVariable String id, @RequestBody @Valid AjusteQuantidadeRequestDTO delta) {
         MedicamentoResponseDTO medicamentoResponseDTO = service.ajustarQuantidade(id, delta.getDelta());
         return ResponseEntity.ok(medicamentoResponseDTO);
+    }
+
+    @Operation(summary = "Deleta um Medicamento do Estoque")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable String id){
+        service.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 }

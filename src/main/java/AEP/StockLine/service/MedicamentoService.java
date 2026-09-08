@@ -68,4 +68,12 @@ public class MedicamentoService {
         Medicamento atualizado = medicamentoRepository.save(medicamento);
         return medicamentoMapper.toResponseDTO(atualizado);
     }
+
+    public void deletar(String id) {
+        if (!medicamentoRepository.existsById(id)) {
+            throw new MedicamentoNotFoundException(id);
+        }
+
+        medicamentoRepository.deleteById(id);
+    }
 }
