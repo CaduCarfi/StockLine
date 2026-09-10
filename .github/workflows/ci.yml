@@ -54,7 +54,9 @@ jobs:
           MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
           MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
           SPRING_PROFILES_ACTIVE: teste
-        run: mvn clean test
+        run: |
+          echo "MONGODB_TEST_URI=$MONGODB_TEST_URI"
+          mvn clean test
 
       - name: Stop MongoDB
         if: always()
