@@ -1,261 +1,674 @@
-StockLine
+# 💊 StockLine
 
-API REST para gerenciamento de medicamentos e controle de estoque, desenvolvida com Java e Spring Boot, utilizando MongoDB como banco de dados.
+API REST para gerenciamento de medicamentos e controle de estoque, desenvolvida com **Java 21** e **Spring Boot 4**, utilizando **MongoDB** como banco de dados.
 
-O projeto tem como objetivo fornecer uma solução simples e organizada para cadastro, consulta e gerenciamento da quantidade de medicamentos em estoque, seguindo boas práticas de desenvolvimento, testes automatizados e integração contínua.
+O projeto fornece uma solução simples e organizada para cadastro, consulta, edição e controle de quantidade de medicamentos em estoque, seguindo boas práticas de desenvolvimento, testes automatizados e integração contínua.
 
-📋 Sobre o projeto
+---
 
-O StockLine é uma aplicação backend voltada para o gerenciamento de medicamentos.
+## 📑 Índice
 
-A API permitirá realizar operações como:
+- [Sobre o projeto](#-sobre-o-projeto)
+- [Tecnologias](#-tecnologias)
+- [Arquitetura](#-arquitetura)
+- [Estrutura do projeto](#-estrutura-do-projeto)
+- [Modelo de dados](#-modelo-de-dados)
+- [Como rodar o projeto](#-como-rodar-o-projeto)
+- [Documentação da API (Swagger)](#-documentação-da-api-swagger)
+- [Endpoints](#-endpoints)
+- [Validações](#-validações)
+- [Tratamento de erros](#-tratamento-de-erros)
+- [Testes e cobertura](#-testes-e-cobertura)
+- [Integração contínua](#-integração-contínua)
+- [Problemas comuns](#-problemas-comuns)
+- [Estratégia de branches](#-estratégia-de-branches)
+- [Objetivos do projeto](#-objetivos-do-projeto)
+- [Licença](#-licença)
 
-Cadastro de medicamentos
-Listagem de medicamentos
-Busca de medicamentos
-Edição de medicamentos
-Controle de quantidade em estoque
-Baixa de estoque
-Persistência dos dados em uma única coleção MongoDB
-Testes automatizados
-Análise de cobertura de testes
+---
 
-O projeto está sendo desenvolvido de forma incremental, com foco em código organizado, testável e de fácil manutenção.
+## 📋 Sobre o projeto
 
-🚀 Tecnologias
-Tecnologia	Utilização
-Java	Linguagem principal
-Spring Boot	Framework principal
-Spring Web	Desenvolvimento da API REST
-Spring Data MongoDB	Persistência dos dados
-MongoDB	Banco de dados NoSQL
-JUnit 5	Testes automatizados
-Mockito	Mocking e testes unitários
-JaCoCo	Análise de cobertura de testes
-Docker	Containerização
-GitHub Actions	Integração contínua (CI)
-Git	Controle de versão
-🏗️ Arquitetura
+O **StockLine** é uma aplicação backend voltada para o gerenciamento de medicamentos. A API permite:
 
-O projeto segue uma organização em camadas, buscando separar as responsabilidades da aplicação:
+- Cadastrar medicamentos
+- Listar todos os medicamentos
+- Buscar um medicamento por ID
+- Editar um medicamento
+- Ajustar a quantidade em estoque (entrada e baixa)
+- Excluir um medicamento
+- Persistir os dados em uma única coleção MongoDB (`medicamentos`)
 
-src/
-└── main/
-    └── java/
-        └── AEP/
-            └── StockLine/
-                ├── controller/
-                ├── dto/
-                ├── model/
-                ├── repository/
-                └── service/
+---
 
-Camadas
+## 🚀 Tecnologias
 
-Controller
+| Tecnologia | Versão | Utilização |
+|---|---|---|
+| **Java** | 21 | Linguagem principal |
+| **Spring Boot** | 4.1.1 | Framework principal |
+| **Spring Web MVC** | — | Desenvolvimento da API REST |
+| **Spring Data MongoDB** | — | Persistência dos dados |
+| **Spring Validation** | — | Validação dos dados de entrada |
+| **MongoDB** | 7 | Banco de dados NoSQL |
+| **Lombok** | — | Redução de código boilerplate |
+| **SpringDoc OpenAPI** | 2.8.14 | Documentação interativa (Swagger UI) |
+| **spring-dotenv** | 4.0.0 | Leitura de variáveis do arquivo `.env` |
+| **JUnit 5** | — | Testes automatizados |
+| **Mockito** | — | Mocking em testes unitários |
+| **JaCoCo** | 0.8.13 | Análise de cobertura de testes |
+| **Docker / Docker Compose** | — | Containerização do MongoDB |
+| **GitHub Actions** | — | Integração contínua (CI) |
+| **Maven Wrapper** | — | Build sem precisar instalar o Maven |
 
-Responsável por receber as requisições HTTP e retornar as respostas da API.
+---
 
-DTO
+## 🏗️ Arquitetura
 
-Responsável pela comunicação de dados entre a API e o cliente, evitando expor diretamente os objetos de domínio.
+O projeto segue uma organização em camadas, separando claramente as responsabilidades:
 
-Service
+```
+Controller  →  Service  →  Repository  →  MongoDB
+     ↑            ↓
+    DTO      Mapper / Model
+```
 
-Concentra as regras de negócio da aplicação.
+| Camada | Responsabilidade |
+|---|---|
+| **Controller** | Recebe as requisições HTTP, valida a entrada e devolve as respostas. |
+| **DTO** | Contratos de entrada e saída da API, evitando expor o modelo de domínio. |
+| **Mapper** | Converte DTO ↔ entidade (`MedicamentoMapper`). |
+| **Service** | Concentra as regras de negócio (ex.: não permitir estoque negativo). |
+| **Repository** | Comunicação com o MongoDB via `MongoRepository`. |
+| **Model** | Documento persistido no banco (`@Document(collection = "medicamentos")`). |
+| **Exception** | Exceções de domínio + `GlobalExceptionHandler` para padronizar erros. |
 
-Repository
+---
 
-Responsável pela comunicação com o MongoDB através do Spring Data MongoDB.
+## 📁 Estrutura do projeto
 
-Model
+```
+StockLine/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                      # Pipeline de CI
+├── .mvn/
+│   └── wrapper/
+├── src/
+│   ├── main/
+│   │   ├── java/AEP/StockLine/
+│   │   │   ├── controller/
+│   │   │   │   └── MedicamentoController.java
+│   │   │   ├── dto/
+│   │   │   │   ├── AjusteQuantidadeRequestDTO.java
+│   │   │   │   ├── ErroResponseDTO.java
+│   │   │   │   ├── MedicamentoRequestDTO.java
+│   │   │   │   └── MedicamentoResponseDTO.java
+│   │   │   ├── exception/
+│   │   │   │   ├── GlobalExceptionHandler.java
+│   │   │   │   ├── MedicamentoNotFoundException.java
+│   │   │   │   └── QuantidadeInvalidaException.java
+│   │   │   ├── mapper/
+│   │   │   │   └── MedicamentoMapper.java
+│   │   │   ├── model/
+│   │   │   │   └── Medicamento.java
+│   │   │   ├── repository/
+│   │   │   │   └── MedicamentoRepository.java
+│   │   │   ├── service/
+│   │   │   │   └── MedicamentoService.java
+│   │   │   └── StockLineApplication.java
+│   │   └── resources/
+│   │       └── application.properties
+│   └── test/
+│       ├── java/AEP/StockLine/
+│       │   ├── controller/MedicamentoControllerTest.java
+│       │   ├── exception/GlobalExceptionHandlerTest.java
+│       │   ├── repository/MedicamentoRepositoryTest.java
+│       │   ├── service/MedicamentoServiceTest.java
+│       │   └── StockLineApplicationTests.java
+│       └── resources/
+│           └── application-teste.properties
+├── .env.example
+├── docker-compose.yml
+├── mvnw / mvnw.cmd
+├── pom.xml
+└── README.md
+```
 
-Representa os documentos persistidos no banco de dados.
+---
 
-💊 Medicamento
+## 🗃️ Modelo de dados
 
-O cadastro de um medicamento possui informações como:
+Coleção MongoDB: **`medicamentos`**
 
-Nome — obrigatório
-Descrição — opcional
-Quantidade — obrigatória
-Validade
-Lote
+| Campo | Tipo | Obrigatório | Observação |
+|---|---|---|---|
+| `id` | String | gerado | Identificador do documento |
+| `nome` | String | ✅ | Não pode ser vazio |
+| `descricao` | String | ❌ | Campo opcional |
+| `quantidade` | Integer | ✅ | Não pode ser negativa |
+| `validade` | LocalDate | ✅ | Formato `yyyy-MM-dd` |
+| `lote` | String | ✅ | Não pode ser vazio |
 
-As informações retornadas pela API podem ser diferentes das informações recebidas no cadastro, utilizando DTOs específicos para entrada e saída de dados.
+---
 
-Exemplo de requisição
+## ⚙️ Como rodar o projeto
+
+### 1. Pré-requisitos
+
+| Ferramenta | Versão | Verificar |
+|---|---|---|
+| **Java JDK** | **21 ou superior** | `java -version` |
+| **Docker Desktop** | recente | `docker --version` |
+| **Git** | qualquer | `git --version` |
+| Maven | *opcional* | o projeto já traz o wrapper |
+
+> 💡 **Não é preciso instalar o Maven** — use `./mvnw` (Linux/macOS) ou `.\mvnw.cmd` (Windows).
+>
+> 💡 **Não é preciso instalar o MongoDB** — ele sobe via Docker Compose.
+
+---
+
+### 2. Clonar o repositório
+
+```bash
+git clone https://github.com/CaduCarfi/StockLine.git
+```
+
+```bash
+cd StockLine
+```
+
+---
+
+### 3. Configurar as variáveis de ambiente
+
+A aplicação **não sobe sem** a variável `MONGODB_URI`. Copie o arquivo de exemplo:
+
+**Linux/macOS:**
+
+```bash
+cp .env.example .env
+```
+
+**Windows (PowerShell):**
+
+```bash
+Copy-Item .env.example .env
+```
+
+Conteúdo do `.env` (já compatível com o `docker-compose.yml`):
+
+```properties
+MONGODB_URI=mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
+MONGODB_TEST_URI=mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
+```
+
+| Variável | Uso |
+|---|---|
+| `MONGODB_URI` | Banco usado pela aplicação em execução |
+| `MONGODB_TEST_URI` | Banco usado pelos testes (perfil `teste`) |
+
+> ⚠️ O `.env` **não deve ser commitado**. Use o `.env.example` como modelo.
+
+---
+
+### 4. Subir o MongoDB
+
+```bash
+docker compose up -d mongodb
+```
+
+Isso cria o container `medistock-mongo` na porta `27017`, com usuário `admin` / senha `admin123` e um volume persistente (`mongo-data`).
+
+Comandos úteis:
+
+```bash
+docker compose ps
+```
+
+```bash
+docker compose logs -f mongodb
+```
+
+```bash
+docker compose down
+```
+
+> ⚠️ `docker compose down -v` também **apaga os dados** do volume.
+
+Testar a conexão pelo shell do Mongo:
+
+```bash
+docker exec -it medistock-mongo mongosh -u admin -p admin123 --authenticationDatabase admin
+```
+
+---
+
+### 5. Executar a aplicação
+
+**Windows:**
+
+```bash
+.\mvnw.cmd spring-boot:run
+```
+
+**Linux/macOS:**
+
+```bash
+./mvnw spring-boot:run
+```
+
+> Se aparecer *permission denied* no Linux/macOS, rode `chmod +x mvnw` antes.
+
+A API sobe em **http://localhost:8080** e o console mostra:
+
+```
+Started StockLineApplication in X.XXX seconds
+```
+
+Para parar: `Ctrl + C`.
+
+> ℹ️ O **DevTools** está habilitado — alterações recompiladas pela IDE reiniciam a aplicação automaticamente.
+
+---
+
+### 6. Gerar e executar o `.jar`
+
+```bash
+./mvnw clean package
+```
+
+```bash
+java -jar target/StockLine-0.0.1-SNAPSHOT.jar
+```
+
+Para pular os testes no build (útil quando o Mongo não está de pé):
+
+```bash
+./mvnw clean package -DskipTests
+```
+
+---
+
+### 7. Fluxo resumido
+
+```bash
+git clone https://github.com/CaduCarfi/StockLine.git && cd StockLine && cp .env.example .env && docker compose up -d mongodb && ./mvnw spring-boot:run
+```
+
+---
+
+## 📖 Documentação da API (Swagger)
+
+Com a aplicação rodando, a documentação interativa fica disponível em:
+
+| Recurso | URL |
+|---|---|
+| **Swagger UI** | http://localhost:8080/swagger-ui.html |
+| **OpenAPI JSON** | http://localhost:8080/v3/api-docs |
+
+Pelo Swagger UI é possível testar todos os endpoints direto do navegador, sem precisar de Postman ou curl.
+
+---
+
+## 📡 Endpoints
+
+Base: `http://localhost:8080/medicamentos`
+
+| Método | Rota | Descrição | Sucesso |
+|---|---|---|---|
+| `POST` | `/medicamentos` | Cadastra um medicamento | `201 Created` |
+| `GET` | `/medicamentos` | Lista todos os medicamentos | `200 OK` |
+| `GET` | `/medicamentos/{id}` | Busca um medicamento por ID | `200 OK` |
+| `PUT` | `/medicamentos/{id}` | Atualiza um medicamento | `200 OK` |
+| `PATCH` | `/medicamentos/{id}/quantidade` | Ajusta a quantidade em estoque | `200 OK` |
+| `DELETE` | `/medicamentos/{id}` | Remove um medicamento | `204 No Content` |
+
+---
+
+### ➕ Cadastrar medicamento
+
+`POST /medicamentos`
+
+**Requisição:**
+
+```json
 {
-  "nome": "Dipirona",
-  "descricao": "Medicamento genérico",
-  "quantidade": 100
-}
-
-Exemplo de resposta
-{
-  "id": "68b7a123456789",
   "nome": "Dipirona",
   "descricao": "Medicamento genérico",
   "quantidade": 100,
   "validade": "2027-08-15",
   "lote": "LOT-2026-001"
 }
+```
 
-📌 Funcionalidades
-Medicamentos
- Cadastro de medicamentos
- Listagem de medicamentos
- Busca de medicamento
- Edição de medicamento
-Estoque
- Controle de quantidade
- Baixa de estoque
-Banco de dados
- Uma única coleção MongoDB
- Documentos simples e homogêneos
-Qualidade
- Testes automatizados
- Cobertura mínima de 70%
- CI bloqueando código com testes/cobertura insuficientes
-Documentação
- README inicial
-🧪 Testes
+**Resposta — `201 Created`:**
 
-O projeto utiliza JUnit 5 para testes automatizados e Mockito para criação de mocks durante os testes unitários.
+```json
+{
+  "id": "68b7a12345678901234abcde",
+  "nome": "Dipirona",
+  "descricao": "Medicamento genérico",
+  "quantidade": 100,
+  "validade": "2027-08-15",
+  "lote": "LOT-2026-001"
+}
+```
 
-A cobertura do código é analisada utilizando JaCoCo, tendo como objetivo uma cobertura mínima de:
+```bash
+curl -X POST http://localhost:8080/medicamentos -H "Content-Type: application/json" -d "{\"nome\":\"Dipirona\",\"descricao\":\"Medicamento generico\",\"quantidade\":100,\"validade\":\"2027-08-15\",\"lote\":\"LOT-2026-001\"}"
+```
 
-70%
+---
 
+### 📋 Listar medicamentos
 
-Os testes fazem parte do processo de integração contínua e alterações que não atendam aos critérios definidos pelo projeto podem ser bloqueadas pelo pipeline.
+`GET /medicamentos`
 
-🔄 Integração Contínua
+**Resposta — `200 OK`:**
 
-O projeto utiliza GitHub Actions para executar automaticamente verificações a cada alteração enviada ao repositório.
+```json
+[
+  {
+    "id": "68b7a12345678901234abcde",
+    "nome": "Dipirona",
+    "descricao": "Medicamento genérico",
+    "quantidade": 100,
+    "validade": "2027-08-15",
+    "lote": "LOT-2026-001"
+  }
+]
+```
 
-O pipeline tem como objetivo:
+```bash
+curl http://localhost:8080/medicamentos
+```
 
-Compilar o projeto
-Executar os testes automatizados
-Gerar o relatório de cobertura
-Verificar o percentual mínimo de cobertura
-Bloquear alterações que não atendam aos critérios definidos
-🐳 Docker
+---
 
-O projeto possui suporte à utilização de Docker para facilitar a configuração do ambiente de desenvolvimento e execução da aplicação.
+### 🔍 Buscar por ID
 
-A utilização de containers permite padronizar o ambiente e reduzir diferenças entre as máquinas utilizadas pelos integrantes da equipe.
+`GET /medicamentos/{id}`
 
-⚙️ Como executar o projeto
-Pré-requisitos
+```bash
+curl http://localhost:8080/medicamentos/68b7a12345678901234abcde
+```
 
-Antes de executar o projeto, certifique-se de possuir instalado:
+Se o ID não existir, a API responde `404 Not Found`.
 
-Java
-Maven ou Maven Wrapper
-Docker
-Git
-Clonando o repositório
-git clone https://github.com/CaduCarfi/StockLine.git
+---
 
+### ✏️ Atualizar medicamento
 
-Entre no diretório:
+`PUT /medicamentos/{id}`
 
-cd StockLine
+Substitui **todos** os campos do medicamento. O corpo é o mesmo do cadastro:
 
-Executando os testes
+```json
+{
+  "nome": "Dipirona Sódica",
+  "descricao": "Analgésico e antitérmico",
+  "quantidade": 80,
+  "validade": "2028-01-30",
+  "lote": "LOT-2026-002"
+}
+```
 
-No Windows:
+```bash
+curl -X PUT http://localhost:8080/medicamentos/68b7a12345678901234abcde -H "Content-Type: application/json" -d "{\"nome\":\"Dipirona Sodica\",\"quantidade\":80,\"validade\":\"2028-01-30\",\"lote\":\"LOT-2026-002\"}"
+```
 
-.\mvnw.cmd test
+---
 
+### 🔁 Ajustar quantidade (entrada / baixa de estoque)
 
-No Linux/macOS:
+`PATCH /medicamentos/{id}/quantidade`
 
-./mvnw test
+Aplica um **delta** sobre a quantidade atual: valor positivo dá entrada, negativo dá baixa.
 
-Executando a aplicação
+**Requisição:**
 
-Windows:
+```json
+{
+  "delta": -5
+}
+```
 
-.\mvnw.cmd spring-boot:run
+**Resposta — `200 OK`** (medicamento com a quantidade já atualizada):
 
+```json
+{
+  "id": "68b7a12345678901234abcde",
+  "nome": "Dipirona",
+  "descricao": "Medicamento genérico",
+  "quantidade": 95,
+  "validade": "2027-08-15",
+  "lote": "LOT-2026-001"
+}
+```
 
-Linux/macOS:
+```bash
+curl -X PATCH http://localhost:8080/medicamentos/68b7a12345678901234abcde/quantidade -H "Content-Type: application/json" -d "{\"delta\":-5}"
+```
 
-./mvnw spring-boot:run
+> ⚠️ **Regras:** o `delta` precisa estar entre **-10 e 10**, e o resultado **não pode ficar negativo** — caso contrário a API responde `400 Bad Request`.
 
-🌿 Estratégia de branches
+---
 
-O projeto utiliza branches para organizar o desenvolvimento das funcionalidades.
+### 🗑️ Deletar medicamento
 
-Exemplo:
+`DELETE /medicamentos/{id}`
 
-main
+Resposta: `204 No Content` (sem corpo).
+
+```bash
+curl -X DELETE http://localhost:8080/medicamentos/68b7a12345678901234abcde
+```
+
+---
+
+## ✅ Validações
+
+### `MedicamentoRequestDTO` (cadastro e atualização)
+
+| Campo | Regra | Mensagem |
+|---|---|---|
+| `nome` | `@NotBlank` | *O nome do medicamento é obrigatório* |
+| `descricao` | — | opcional |
+| `quantidade` | `@NotNull` + `@Min(0)` | *A quantidade é obrigatória* / *A quantidade não pode ser negativa* |
+| `validade` | `@NotNull` | *A validade é obrigatória* |
+| `lote` | `@NotBlank` | *O lote é obrigatório* |
+
+### `AjusteQuantidadeRequestDTO` (ajuste de estoque)
+
+| Campo | Regra | Mensagem |
+|---|---|---|
+| `delta` | `@NotNull` | *O delta é obrigatório* |
+| `delta` | `@Min(-10)` | *O delta não pode ser menor que -10* |
+| `delta` | `@Max(10)` | *O delta não pode ser maior que 10* |
+
+---
+
+## ⚠️ Tratamento de erros
+
+Todos os erros de domínio passam pelo `GlobalExceptionHandler` e retornam o mesmo formato (`ErroResponseDTO`):
+
+```json
+{
+  "status": 404,
+  "mensagem": "Medicamento não encontrado com o id: 123"
+}
+```
+
+| Situação | Exceção | Status |
+|---|---|---|
+| ID inexistente em busca, edição, ajuste ou exclusão | `MedicamentoNotFoundException` | `404 Not Found` |
+| Ajuste que deixaria o estoque negativo | `QuantidadeInvalidaException` | `400 Bad Request` |
+| Corpo da requisição inválido (Bean Validation) | `MethodArgumentNotValidException` | `400 Bad Request` |
+
+Exemplo de erro de estoque negativo:
+
+```json
+{
+  "status": 400,
+  "mensagem": "Ajuste de quantidade inválido para o medicamento 68b7a123: delta -10 resultaria em quantidade negativa"
+}
+```
+
+---
+
+## 🧪 Testes e cobertura
+
+O projeto usa **JUnit 5** e **Mockito**. Os testes de repositório exigem um MongoDB acessível através de `MONGODB_TEST_URI`, então **suba o Docker antes de rodá-los**.
+
+### Rodar os testes
+
+**Windows:**
+
+```bash
+docker compose up -d mongodb
+```
+
+```bash
+.\mvnw.cmd clean test
+```
+
+**Linux/macOS:**
+
+```bash
+./mvnw clean test
+```
+
+> O perfil de teste é ativado com `SPRING_PROFILES_ACTIVE=teste`, que carrega o `application-teste.properties` e aponta para o banco `medistock_test`.
+
+### Suítes de teste
+
+| Arquivo | Foco |
+|---|---|
+| `MedicamentoServiceTest` | Regras de negócio com mocks (Mockito) |
+| `MedicamentoControllerTest` | Camada web e contratos HTTP |
+| `MedicamentoRepositoryTest` | Integração com o MongoDB |
+| `GlobalExceptionHandlerTest` | Padronização das respostas de erro |
+| `StockLineApplicationTests` | Carregamento do contexto Spring |
+
+### Cobertura (JaCoCo)
+
+O relatório é gerado automaticamente na fase `test`:
+
+```bash
+./mvnw clean test
+```
+
+Abra o relatório em:
+
+```
+target/site/jacoco/index.html
+```
+
+**Regra de cobertura configurada no `pom.xml`:**
+
+- Mínimo de **70%** de instruções cobertas (`BUNDLE` / `INSTRUCTION` / `COVEREDRATIO ≥ 0.70`)
+- **Excluídos** da métrica: `model/`, `dto/` e `mapper/` (classes majoritariamente geradas pelo Lombok)
+- Se a cobertura ficar abaixo do mínimo, o goal `jacoco:check` **falha o build**
+
+---
+
+## 🔄 Integração contínua
+
+Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+
+**Disparo:** em todo `push` (qualquer branch) e em `pull_request` para `master`.
+
+**Etapas do pipeline:**
+
+1. Checkout do repositório
+2. Setup do **Java 21** (Temurin) com cache do Maven
+3. Sobe o MongoDB via `docker compose up -d mongodb`
+4. Aguarda o MongoDB ficar pronto (`mongosh ping` em loop)
+5. Verifica a autenticação no banco de teste
+6. Executa `mvn clean test` com `MONGODB_URI`, `MONGODB_TEST_URI` e `SPRING_PROFILES_ACTIVE=teste`
+7. Derruba o MongoDB (`docker compose down -v`), mesmo em caso de falha
+
+O build **falha** — e o PR fica bloqueado — se algum teste quebrar ou se a cobertura ficar abaixo de 70%.
+
+---
+
+## 🐛 Problemas comuns
+
+| Problema | Causa provável | Solução |
+|---|---|---|
+| `Could not resolve placeholder 'MONGODB_URI'` | `.env` não criado | `cp .env.example .env` |
+| `Connection refused: localhost:27017` | MongoDB não está rodando | `docker compose up -d mongodb` |
+| `Authentication failed` | URI sem `authSource=admin` | Use a URI exatamente como no `.env.example` |
+| `Port 8080 was already in use` | Porta ocupada | Altere `server.port` no `application.properties` |
+| `UnsupportedClassVersionError` | JDK abaixo de 21 | Instale o **JDK 21** e confira `java -version` |
+| `mvnw: Permission denied` | Wrapper sem permissão | `chmod +x mvnw` |
+| Testes de repositório falhando | Mongo fora do ar / perfil errado | Suba o Docker e use `SPRING_PROFILES_ACTIVE=teste` |
+| Build falha em `jacoco:check` | Cobertura abaixo de 70% | Escreva mais testes |
+| `docker: command not found` | Docker não instalado/aberto | Instale e abra o Docker Desktop |
+
+---
+
+## 🌿 Estratégia de branches
+
+A branch principal é **`master`**. O desenvolvimento acontece em branches de funcionalidade:
+
+```
+master
  ├── feature/dtos
  ├── feature/medicamento
  ├── feature/estoque
  └── feature/testes
+```
 
+As alterações são integradas ao `master` através de **Pull Requests**, que só podem ser mesclados com o CI verde.
 
-As alterações devem ser desenvolvidas em branches específicas e posteriormente integradas à branch principal através de Pull Requests.
+### Convenção de commits
 
-Convenção de commits
-
-Recomenda-se utilizar mensagens de commit seguindo o padrão:
-
-feat: adiciona nova funcionalidade
-fix: corrige comportamento
-test: adiciona testes
-refactor: refatora código
-docs: atualiza documentação
-chore: atualiza configurações
-
+```
+feat:     adiciona nova funcionalidade
+fix:      corrige comportamento
+test:     adiciona ou ajusta testes
+refactor: refatora código sem mudar comportamento
+docs:     atualiza documentação
+chore:    atualiza configurações e dependências
+```
 
 Exemplo:
 
-git commit -m "feat: adiciona DTOs de medicamento"
+```bash
+git commit -m "feat: adiciona ajuste de quantidade em estoque"
+```
 
-📁 Estrutura do projeto
-StockLine/
-├── .github/
-│   └── workflows/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── AEP/
-│   │   │       └── StockLine/
-│   │   │           ├── controller/
-│   │   │           ├── dto/
-│   │   │           ├── model/
-│   │   │           ├── repository/
-│   │   │           └── service/
-│   │   └── resources/
-│   └── test/
-├── Dockerfile
-├── pom.xml
-└── README.md
+---
 
-🎯 Objetivos do projeto
+## 🎯 Objetivos do projeto
 
 O desenvolvimento do StockLine busca aplicar, na prática:
 
-Desenvolvimento de APIs REST
-Arquitetura em camadas
-Persistência com MongoDB
-Utilização de DTOs
-Validação de dados
-Testes unitários
-Mocking com Mockito
-Controle de cobertura com JaCoCo
-Integração contínua
-Containerização com Docker
-Controle de versão com Git e GitHub
-👥 Desenvolvimento
+- Desenvolvimento de APIs REST
+- Arquitetura em camadas
+- Persistência com MongoDB e Spring Data
+- Utilização de DTOs e mappers
+- Validação de dados com Bean Validation
+- Tratamento centralizado de exceções
+- Documentação de API com OpenAPI/Swagger
+- Testes unitários e de integração
+- Mocking com Mockito
+- Controle de cobertura com JaCoCo
+- Integração contínua com GitHub Actions
+- Containerização com Docker
+- Controle de versão com Git e GitHub
 
-Projeto desenvolvido como parte da atividade acadêmica, utilizando práticas de desenvolvimento colaborativo e controle de versão.
+---
 
-📄 Licença
+## 👥 Desenvolvimento
+
+Projeto desenvolvido como parte de atividade acadêmica (AEP), utilizando práticas de desenvolvimento colaborativo e controle de versão.
+
+---
+
+## 📄 Licença
 
 Este projeto foi desenvolvido para fins acadêmicos.

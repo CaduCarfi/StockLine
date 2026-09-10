@@ -1,8 +1,10 @@
 package AEP.StockLine.controller;
 
+import AEP.StockLine.dto.AjusteQuantidadeRequestDTO;
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
+import AEP.StockLine.exception.QuantidadeInvalidaException;
 import AEP.StockLine.service.MedicamentoService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MedicamentoControllerTest {
@@ -162,5 +164,74 @@ class MedicamentoControllerTest {
         assertThatThrownBy(() ->
                 controller.atualizar("999", request))
                 .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveAjustarQuantidadeComSucesso() {
+        AjusteQuantidadeRequestDTO request = new AjusteQuantidadeRequestDTO(5);
+
+        MedicamentoResponseDTO responseDTO = new MedicamentoResponseDTO(
+                "1",
+                "Paracetamol",
+                "Analgésico",
+                105,
+                LocalDate.of(2027, 5, 20),
+                "LOT-2026-001"
+        );
+
+        when(service.ajustarQuantidade("1", 5)).thenReturn(responseDTO);
+
+        ResponseEntity<MedicamentoResponseDTO> resposta = controller.ajustarQuantidade("1", request);
+
+        assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resposta.getBody().getQuantidade()).isEqualTo(105);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoMedicamentoNaoExistirAoAjustarQuantidade() {
+        AjusteQuantidadeRequestDTO request = new AjusteQuantidadeRequestDTO(5);
+
+        when(service.ajustarQuantidade("999", 5))
+                .thenThrow(new MedicamentoNotFoundException("999"));
+
+        assertThatThrownBy(() -> controller.ajustarQuantidade("999", request))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoAjusteResultarEmQuantidadeNegativa() {
+        AjusteQuantidadeRequestDTO request = new AjusteQuantidadeRequestDTO(-5);
+
+        when(service.ajustarQuantidade("999", -5))
+                .thenThrow(new QuantidadeInvalidaException("999", -5));
+
+        assertThatThrownBy(() -> controller.ajustarQuantidade("999", request))
+                .isInstanceOf(QuantidadeInvalidaException.class);
+    }
+
+    @Test
+    void deveDeletarMedicamentoComSucesso() {
+        ResponseEntity<Void> resposta = controller.deletar("67");
+
+        assertThat(resposta.getStatusCode())
+                .isEqualTo(HttpStatus.NO_CONTENT);
+
+        assertThat(resposta.getBody())
+                .isNull();
+
+        verify(service).deletar("67");
+    }
+
+    @Test
+    void deveLancarExcecaoAoDeletarMedicamentoQueNaoExiste() {
+        doThrow(new MedicamentoNotFoundException("555"))
+                .when(service)
+                .deletar("555");
+
+        assertThatThrownBy(() -> controller.deletar("555"))
+                .isInstanceOf(MedicamentoNotFoundException.class)
+                .hasMessage("Medicamento não encontrado com o id: 555");
+
+        verify(service).deletar("555");
     }
 }
