@@ -22,11 +22,13 @@ public class MedicamentoController {
         this.service = service;
     }
 
+    @Operation(summary = "Busca o medicamento pelo Id")
     @GetMapping("/{id}")
     public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
+    @Operation(summary = "Busca todos os medicamentos")
     @GetMapping
     public ResponseEntity<List<MedicamentoResponseDTO>> listar() {
         return ResponseEntity.ok(service.listarTodos());
