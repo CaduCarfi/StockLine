@@ -1,14 +1,23 @@
 package AEP.StockLine.controller;
 
-import AEP.StockLine.dto.AjusteQuantidadeRequestDTO;
-import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
-import AEP.StockLine.service.MedicamentoService;
+import AEP.StockLine.dto.AjusteQuantidadeRequestDTO;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.web.bind.annotation.PatchMapping;
+import AEP.StockLine.model.Movimentacao;
+import AEP.StockLine.dto.MedicamentoRequestDTO;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import java.net.URI;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import AEP.StockLine.service.MedicamentoService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -22,45 +31,37 @@ public class MedicamentoController {
         this.service = service;
     }
 
-    @Operation(summary = "Busca o medicamento pelo Id")
-    @GetMapping("/{id}")
-    public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {
-        return ResponseEntity.ok(service.buscarPorId(id));
-    }
-
     @Operation(summary = "Busca todos os medicamentos")
     @GetMapping
     public ResponseEntity<List<MedicamentoResponseDTO>> listar() {
         return ResponseEntity.ok(service.listarTodos());
     }
 
+    @Operation(summary = "Busca o medicamento pelo Id")
+    @GetMapping("/{id}")
+    public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {
+        return ResponseEntity.ok(service.buscarPorId(id));
+    }
+
     @Operation(summary = "Cadastra um novo medicamento no estoque")
     @PostMapping
-    public ResponseEntity<MedicamentoResponseDTO> cadastrar(@RequestBody @Valid MedicamentoRequestDTO request) {
-        MedicamentoResponseDTO medicamentoResponseDTO = service.cadastrar(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(medicamentoResponseDTO);
+    public ResponseEntity<MedicamentoResponseDTO> criar(@Valid @RequestBody MedicamentoRequestDTO dto) {
+        MedicamentoResponseDTO medicamento = service.criar(dto);
+        return ResponseEntity.created(URI.create("/medicamentos/" + medicamento.getId()))
+                .body(medicamento);
     }
 
-
-    @Operation(summary = "Atualiza um Medicamento do Estoque")
+    @Operation(summary = "Atualiza um medicamento do estoque")
     @PutMapping("/{id}")
     public ResponseEntity<MedicamentoResponseDTO> atualizar(@PathVariable String id,
-                                                            @RequestBody @Valid MedicamentoRequestDTO request) {
-        MedicamentoResponseDTO medicamentoResponseDTO = service.atualizar(request, id);
-        return ResponseEntity.ok(medicamentoResponseDTO);
+            @Valid @RequestBody MedicamentoRequestDTO dto) {
+        return ResponseEntity.ok(service.atualizar(id, dto));
     }
 
-    @Operation(summary = "Ajusta a quantidade de Medicamentos no Estoque")
-    @PatchMapping("/{id}/quantidade")
-    public ResponseEntity<MedicamentoResponseDTO> ajustarQuantidade(@PathVariable String id, @RequestBody @Valid AjusteQuantidadeRequestDTO delta) {
-        MedicamentoResponseDTO medicamentoResponseDTO = service.ajustarQuantidade(id, delta.getDelta());
-        return ResponseEntity.ok(medicamentoResponseDTO);
-    }
-
-    @Operation(summary = "Deleta um Medicamento do Estoque")
+    @Operation(summary = "Exclui um medicamento sem movimentações")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable String id){
-        service.deletar(id);
+    public ResponseEntity<Void> excluir(@PathVariable String id) {
+        service.excluir(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -68,5 +69,17 @@ public class MedicamentoController {
     @GetMapping("/estoque-baixo")
     public ResponseEntity<List<MedicamentoResponseDTO>> listarEstoqueBaixo() {
         return ResponseEntity.ok(service.listarEstoqueBaixo());
+    }
+  
+    @GetMapping("/{id}/historico")
+    public ResponseEntity<List<Movimentacao>> consultarHistorico(@PathVariable String id) {
+        return ResponseEntity.ok(service.consultarHistorico(id));
+    }
+  
+    @Operation(summary = "Ajusta a quantidade antes das movimentações por lote")
+    @PatchMapping("/{id}/quantidade")
+    public ResponseEntity<MedicamentoResponseDTO> ajustarQuantidade(@PathVariable String id,
+            @Valid @RequestBody AjusteQuantidadeRequestDTO dto) {
+        return ResponseEntity.ok(service.ajustarQuantidade(id, dto.getDelta()));
     }
 }

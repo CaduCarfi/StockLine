@@ -672,3 +672,188 @@ Projeto desenvolvido como parte de atividade acadêmica (AEP), utilizando práti
 ## 📄 Licença
 
 Este projeto foi desenvolvido para fins acadêmicos.
+
+## CRUD de medicamentos
+
+| Método | Rota | Resultado |
+| --- | --- | --- |
+| POST | /medicamentos | Cadastra e retorna 201 com o endereço no cabeçalho Location |
+| GET | /medicamentos | Lista os medicamentos |
+| GET | /medicamentos/{id} | Consulta um medicamento |
+| PUT | /medicamentos/{id} | Atualiza todos os dados cadastrais e retorna 200 |
+| DELETE | /medicamentos/{id} | Exclui e retorna 204 sem conteúdo |
+
+Corpo para cadastro e atualização:
+
+```json
+{
+  "nome": "Dipirona",
+  "descricao": "Analgésico",
+  "quantidade": 20,
+  "validade": "2027-08-15",
+  "lote": "L002"
+}
+```
+
+Nome, quantidade, validade e lote são obrigatórios. A descrição é opcional.
+A quantidade pode ser zero, mas não negativa. Dados inválidos retornam 400.
+Consultar, atualizar ou excluir um ID inexistente retorna 404.
+O PUT mantém o ID e substitui os dados pelos valores enviados.
+Este cartão implementa apenas o cadastro: o vínculo com categorias está descrito na seção seguinte; movimentações ficam para os próximos cartões.
+
+Testes de serviço e API, sem MongoDB:
+
+```powershell
+.\mvnw.cmd "-Dtest=MedicamentoServiceTest,MedicamentoControllerTest" test
+```
+
+Para executar a suíte completa, configure `MONGODB_TEST_URI` apontando para um banco
+exclusivo de testes e execute `.\mvnw.cmd clean test`. Os testes de repositório limpam esse banco.
+
+## Categorias e vínculo com medicamentos
+
+As categorias ficam na coleção `categorias`, com ID e nome.
+Cada medicamento guarda o ID da categoria no campo `categoriaId`.
+
+1. Cadastre uma categoria em `POST /categorias`:
+
+```json
+{"nome":"Analgésicos"}
+```
+
+A API retorna 201 com o ID gerado e o nome. O nome é obrigatório e não pode estar em branco.
+Use `GET /categorias` para listar as categorias (200, ou uma lista vazia se não houver cadastros).
+
+2. Use o ID retornado ao cadastrar ou editar um medicamento:
+
+```json
+{
+  "nome": "Dipirona",
+  "descricao": "Analgésico",
+  "quantidade": 20,
+  "validade": "2027-08-15",
+  "lote": "L002",
+  "categoriaId": "ID_DA_CATEGORIA"
+}
+```
+
+O campo `categoriaId` é obrigatório em `POST /medicamentos` e `PUT /medicamentos/{id}`.
+A categoria precisa existir: caso contrário, a API retorna 404 sem salvar ou alterar o medicamento.
+Campo ausente ou em branco retorna 400. As consultas de medicamentos também retornam `categoriaId`.
+É possível mudar a categoria usando o PUT, informando os demais dados do medicamento.
+Medicamentos antigos continuam consultáveis; para editá-los, informe uma categoria válida.
+
+Os testes verificam cadastro, listagem, validação do nome, vínculo e categoria inexistente.
+O teste de repositório também verifica as duas coleções no MongoDB e a referência persistida.
+
+
+## Entradas de estoque por lote
+
+Use `POST /medicamentos/{id}/entradas` para registrar uma entrada:
+
+```json
+{
+  "lote": "L001",
+  "validade": "2027-08-15",
+  "quantidade": 20
+}
+```
+
+A quantidade precisa ser maior que zero. O lote e a validade são obrigatórios.
+Se o lote não existe, ele é criado. Se já existe, seu saldo é aumentado, mantendo a mesma validade.
+Uma validade diferente para o mesmo lote retorna 400 e não altera o banco.
+A API retorna 200 com o medicamento atualizado, incluindo a lista `lotes` (código, validade e saldo).
+O campo `quantidade` representa a soma dos saldos de todos os lotes.
+Medicamento inexistente retorna 404. Dados inválidos retornam 400.
+
+Lotes e movimentações são subdocumentos do medicamento. Cada entrada registra tipo `ENTRADA`,
+lote, quantidade e data, salvos junto com o saldo no mesmo documento MongoDB.
+A consulta do histórico está descrita na seção Histórico de movimentações. As baixas estão descritas na seção seguinte.
+
+Na primeira entrada, o saldo já existente no cadastro é colocado no lote original, sem perder
+quantidade nem inventar uma entrada retroativa. Antes disso, a lista de lotes pode estar vazia.
+Se o cadastro com saldo não tiver lote ou validade, corrija esses campos pelo PUT antes de registrar a entrada.
+Para iniciar sem estoque, cadastre o medicamento com quantidade zero.
+Os campos antigos `lote` e `validade` continuam representando o cadastro inicial; consulte `lotes`
+para ver o saldo e a validade de cada lote após as entradas.
+
+Após registrar entradas, o PUT permite editar os dados cadastrais, mas quantidade, lote e validade
+devem permanecer iguais aos atuais. O medicamento com movimentações também não pode ser excluído,
+para preservar os registros (retorno 400).
+
+Exemplo de demonstração: partindo de quantidade zero, registre 20 unidades no L001, mais 10 no mesmo
+lote com a mesma validade, e 15 no L002. O total será 45, com saldos 30 no L001 e 15 no L002.
+Tente outra entrada no L001 com validade diferente: ela deve ser rejeitada sem alterar o estoque.
+
+O serviço processa uma entrada por vez nesta instância. A PoC considera uma única instância da aplicação.
+O limite técnico do total é o máximo de um Integer Java; não foi definido um limite de negócio.
+Os testes de repositório verificam os lotes e as movimentações gravados no MongoDB.
+
+
+## Baixas de estoque por lote
+
+Use `POST /medicamentos/{id}/baixas`, escolhendo o lote manualmente:
+
+```json
+{
+  "lote": "L001",
+  "quantidade": 5
+}
+```
+
+A quantidade precisa ser positiva e não pode superar o saldo do lote escolhido, mesmo que haja
+saldo em outros lotes. Lote e quantidade são obrigatórios. Não é preciso informar a validade.
+Uma baixa válida retorna 200 com o medicamento e os lotes atualizados.
+O saldo do lote é reduzido, o total do medicamento é recalculado e uma movimentação `BAIXA`
+é salva com lote, quantidade e data no mesmo documento MongoDB.
+
+Quantidade inválida, lote inexistente e saldo insuficiente retornam 400 sem salvar alterações.
+Medicamento inexistente retorna 404. É possível zerar o lote, que permanece no cadastro.
+A baixa também é permitida para lotes vencidos, por exemplo para descarte.
+Cadastros antigos aproveitam o lote e o saldo originais, seguindo a mesma regra das entradas.
+
+Exemplo: registre 20 unidades no L001 e 10 no L002; baixe 5 do L001.
+Os saldos serão 15 e 10, com total 25. Uma tentativa de baixar 16 do L001 deve ser rejeitada,
+mesmo havendo 25 unidades no total. Depois, baixar 15 do L001 deve deixar esse lote zerado.
+
+Entradas e baixas usam o mesmo serviço, que processa uma movimentação por vez nesta instância.
+Esta PoC considera uma única instância em execução. A consulta do histórico está descrita na seção seguinte.
+Os testes verificam a baixa, o lote escolhido, os limites de saldo, a preservação de dados em erros
+e a persistência do saldo junto com a movimentação no MongoDB.
+
+
+## Histórico de movimentações
+
+Use `GET /medicamentos/{id}/historico` para consultar as entradas e baixas do medicamento.
+
+Exemplo de resposta (200):
+
+```json
+[
+  {
+    "tipo": "BAIXA",
+    "lote": "L001",
+    "quantidade": 5,
+    "data": "2026-11-09T11:00:00"
+  },
+  {
+    "tipo": "ENTRADA",
+    "lote": "L001",
+    "quantidade": 20,
+    "data": "2026-11-09T10:00:00"
+  }
+]
+```
+
+As movimentações aparecem da data mais recente para a mais antiga. Se as datas forem iguais,
+a última registrada aparece primeiro. A consulta não altera os registros salvos no MongoDB.
+Um medicamento sem movimentações retorna uma lista vazia (`[]`) com status 200.
+Um medicamento inexistente retorna 404. O saldo antigo do cadastro não aparece como entrada
+retroativa: são mostradas apenas as entradas e baixas que foram registradas.
+
+Para demonstrar: registre uma entrada de 20 unidades e uma baixa de 5 no mesmo lote.
+Consulte o histórico usando o ID desse medicamento: a baixa deve aparecer antes da entrada.
+Os testes verificam a ordem por data, empates, histórico vazio, medicamento inexistente e
+a consulta das entradas e baixas persistidas no MongoDB.
+
+O ajuste direto de quantidade via PATCH é permitido apenas antes das movimentações por lote. Depois, use entradas e baixas.
