@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -29,16 +30,18 @@ jobs:
 
       - name: Wait for MongoDB
         run: |
-          until docker exec medistock-mongo \
-            mongosh \
-            --username admin \
-            --password admin123 \
-            --authenticationDatabase admin \
-            --eval "db.adminCommand('ping')" > /dev/null 2>&1
-          do
-            echo "Aguardando MongoDB..."
-            sleep 2
-          done
+          timeout 90s bash -c '
+            until docker exec medistock-mongo \
+              mongosh \
+              --username admin \
+              --password admin123 \
+              --authenticationDatabase admin \
+              --eval "db.adminCommand(\"ping\")" > /dev/null 2>&1
+            do
+              echo "Aguardando MongoDB..."
+              sleep 2
+            done
+          '
 
           echo "MongoDB está pronto!"
 
@@ -54,9 +57,7 @@ jobs:
           MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
           MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
           SPRING_PROFILES_ACTIVE: teste
-        run: |
-          echo "MONGODB_TEST_URI=$MONGODB_TEST_URI"
-          mvn clean test
+        run: mvn clean verify
 
       - name: Stop MongoDB
         if: always()
