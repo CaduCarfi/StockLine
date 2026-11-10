@@ -14,6 +14,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import AEP.StockLine.model.Movimentacao;
 import java.util.List;
 import java.util.Optional;
 
@@ -228,5 +231,50 @@ class MedicamentoServiceTest {
                 .isInstanceOf(CategoriaNotFoundException.class);
         assertThat(medicamento.getNome()).isEqualTo("Dipirona");
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void deveConsultarHistoricoDaDataMaisRecenteParaAMaisAntiga() {
+        LocalDateTime data = LocalDateTime.of(2026, 11, 9, 10, 0);
+        Movimentacao entrada = new Movimentacao("ENTRADA", "L1", 20, data);
+        Movimentacao baixa = new Movimentacao("BAIXA", "L1", 5, data.plusHours(1));
+        Movimentacao outraEntrada = new Movimentacao("ENTRADA", "L2", 10, data.plusMinutes(30));
+        Medicamento medicamento = Medicamento.builder().id("1")
+                .movimentacoes(new ArrayList<>(List.of(entrada, baixa, outraEntrada))).build();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+
+        assertThat(service.consultarHistorico("1")).containsExactly(baixa, outraEntrada, entrada);
+        assertThat(medicamento.getMovimentacoes()).containsExactly(entrada, baixa, outraEntrada);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void deveRetornarListaVaziaQuandoNaoHouverMovimentacoes() {
+        when(repository.findById("1")).thenReturn(Optional.of(Medicamento.builder().id("1").build()));
+        assertThat(service.consultarHistorico("1")).isEmpty();
+    }
+
+    @Test
+    void deveConsultarCadastroAntigoSemListaDeMovimentacoes() {
+        Medicamento medicamento = Medicamento.builder().id("1").movimentacoes(null).build();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        assertThat(service.consultarHistorico("1")).isEmpty();
+    }
+
+    @Test
+    void deveRetornarErroAoConsultarHistoricoDeMedicamentoInexistente() {
+        assertThatThrownBy(() -> service.consultarHistorico("999"))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveMostrarUltimaInclusaoPrimeiroQuandoAsDatasForemIguais() {
+        LocalDateTime data = LocalDateTime.of(2026, 11, 9, 10, 0);
+        Movimentacao entrada = new Movimentacao("ENTRADA", "L1", 20, data);
+        Movimentacao baixa = new Movimentacao("BAIXA", "L1", 5, data);
+        Medicamento medicamento = Medicamento.builder().id("1")
+                .movimentacoes(List.of(entrada, baixa)).build();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        assertThat(service.consultarHistorico("1")).containsExactly(baixa, entrada);
     }
 }
