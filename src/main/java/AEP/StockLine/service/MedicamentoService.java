@@ -11,6 +11,8 @@ import AEP.StockLine.exception.CategoriaNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+import AEP.StockLine.exception.EstoqueException;
 
 @Service
 public class MedicamentoService {
@@ -48,6 +50,12 @@ public class MedicamentoService {
                 .orElseThrow(() -> new MedicamentoNotFoundException(id));
 
         validarCategoria(dto.getCategoriaId());
+        if (medicamento.getMovimentacoes() != null && !medicamento.getMovimentacoes().isEmpty()
+                && (!Objects.equals(medicamento.getQuantidade(), dto.getQuantidade())
+                || !Objects.equals(medicamento.getLote(), dto.getLote())
+                || !Objects.equals(medicamento.getValidade(), dto.getValidade()))) {
+            throw new EstoqueException("Use as movimentações para alterar o estoque deste medicamento.");
+        }
         medicamento.setNome(dto.getNome());
         medicamento.setDescricao(dto.getDescricao());
         medicamento.setQuantidade(dto.getQuantidade());
@@ -62,6 +70,9 @@ public class MedicamentoService {
     public void excluir(String id) {
         Medicamento medicamento = repository.findById(id)
                 .orElseThrow(() -> new MedicamentoNotFoundException(id));
+        if (medicamento.getMovimentacoes() != null && !medicamento.getMovimentacoes().isEmpty()) {
+            throw new EstoqueException("Não é possível excluir um medicamento com movimentações.");
+        }
         repository.delete(medicamento);
     }
 
