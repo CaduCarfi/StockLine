@@ -5,6 +5,7 @@ import AEP.StockLine.dto.EntradaRequestDTO;
 import AEP.StockLine.model.Lote;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.service.EntradaService;
+import AEP.StockLine.service.MedicamentoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
@@ -15,10 +16,11 @@ import static org.assertj.core.api.Assertions.*;
 
 @DataMongoTest
 @ActiveProfiles("teste")
-@Import(EntradaService.class)
+@Import({EntradaService.class, MedicamentoService.class})
 class BaixaRepositoryTest {
     @Autowired private MedicamentoRepository repository;
     @Autowired private EntradaService service;
+    @Autowired private MedicamentoService medicamentoService;
 
     @Test
     void deveSalvarBaixaESaldoNoMongoDB() {
@@ -39,6 +41,11 @@ class BaixaRepositoryTest {
             assertThat(baixa.getLote()).isEqualTo("L1");
             assertThat(baixa.getQuantidade()).isEqualTo(4);
             assertThat(baixa.getData()).isNotNull();
+            var historico = medicamentoService.consultarHistorico(id);
+            assertThat(historico).extracting(movimentacao -> movimentacao.getTipo())
+                    .containsExactly("BAIXA", "ENTRADA", "ENTRADA");
+            assertThat(historico).extracting(movimentacao -> movimentacao.getQuantidade())
+                    .containsExactly(4, 20, 10);
 
             assertThatThrownBy(() -> service.registrarBaixa(id, new BaixaRequestDTO("L1", 7)))
                     .isInstanceOf(AEP.StockLine.exception.EstoqueException.class);

@@ -10,6 +10,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import AEP.StockLine.model.Movimentacao;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -201,5 +203,37 @@ class MedicamentoControllerTest {
         mockMvc.perform(post("/medicamentos").contentType("application/json").content(dadosValidos()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Categoria não encontrada com o id: cat1"));
+    }
+
+    @Test
+    void deveConsultarHistoricoComStatus200() throws Exception {
+        LocalDateTime data = LocalDateTime.of(2026, 11, 9, 10, 0);
+        when(service.consultarHistorico("1")).thenReturn(List.of(
+                new Movimentacao("BAIXA", "L1", 5, data.plusHours(1)),
+                new Movimentacao("ENTRADA", "L1", 20, data)));
+
+        mockMvc.perform(get("/medicamentos/1/historico"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].tipo").value("BAIXA"))
+                .andExpect(jsonPath("$[0].lote").value("L1"))
+                .andExpect(jsonPath("$[0].quantidade").value(5))
+                .andExpect(jsonPath("$[0].data").value("2026-11-09T11:00:00"))
+                .andExpect(jsonPath("$[1].tipo").value("ENTRADA"));
+    }
+
+    @Test
+    void deveRetornarHistoricoVazio() throws Exception {
+        when(service.consultarHistorico("1")).thenReturn(List.of());
+        mockMvc.perform(get("/medicamentos/1/historico"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void deveRetornar404ParaHistoricoDeMedicamentoInexistente() throws Exception {
+        when(service.consultarHistorico("999")).thenThrow(new MedicamentoNotFoundException("999"));
+        mockMvc.perform(get("/medicamentos/999/historico"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Medicamento não encontrado com o id: 999"));
     }
 }

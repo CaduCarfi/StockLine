@@ -1,6 +1,7 @@
 package AEP.StockLine.controller;
 
 import AEP.StockLine.dto.MedicamentoResponseDTO;
+import AEP.StockLine.model.Movimentacao;
 import AEP.StockLine.dto.MedicamentoRequestDTO;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -54,5 +55,10 @@ public class MedicamentoController {
     public ResponseEntity<Void> excluir(@PathVariable String id) {
         service.excluir(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/historico")
+    public ResponseEntity<List<Movimentacao>> consultarHistorico(@PathVariable String id) {
+        return ResponseEntity.ok(service.consultarHistorico(id));
     }
 }

@@ -11,6 +11,10 @@ import AEP.StockLine.exception.CategoriaNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import AEP.StockLine.model.Movimentacao;
 import java.util.Objects;
 import AEP.StockLine.exception.EstoqueException;
 
@@ -74,6 +78,20 @@ public class MedicamentoService {
             throw new EstoqueException("Não é possível excluir um medicamento com movimentações.");
         }
         repository.delete(medicamento);
+    }
+
+    public List<Movimentacao> consultarHistorico(String id) {
+        Medicamento medicamento = repository.findById(id)
+                .orElseThrow(() -> new MedicamentoNotFoundException(id));
+
+        if (medicamento.getMovimentacoes() == null) {
+            return new ArrayList<>();
+        }
+        List<Movimentacao> historico = new ArrayList<>(medicamento.getMovimentacoes());
+        // Em datas iguais, a última movimentação registrada aparece primeiro.
+        Collections.reverse(historico);
+        historico.sort(Comparator.comparing(Movimentacao::getData).reversed());
+        return historico;
     }
 
     private void validarCategoria(String categoriaId) {
