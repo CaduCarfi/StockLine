@@ -37,6 +37,9 @@ class MedicamentoServiceTest {
     @Mock
     private CategoriaRepository categoriaRepository;
 
+    @org.mockito.Spy
+    private AEP.StockLine.mapper.MedicamentoMapper mapper = new AEP.StockLine.mapper.MedicamentoMapper();
+
     @InjectMocks
     private MedicamentoService service;
 
@@ -276,5 +279,45 @@ class MedicamentoServiceTest {
                 .movimentacoes(List.of(entrada, baixa)).build();
         when(repository.findById("1")).thenReturn(Optional.of(medicamento));
         assertThat(service.consultarHistorico("1")).containsExactly(baixa, entrada);
+    }
+
+    @Test
+    void deveAjustarQuantidadeAntesDasMovimentacoes() {
+        Medicamento medicamento = medicamentoSalvo();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        when(repository.save(medicamento)).thenReturn(medicamento);
+        assertThat(service.ajustarQuantidade("1", 5).getQuantidade()).isEqualTo(25);
+        assertThat(service.ajustarQuantidade("1", -25).getQuantidade()).isZero();
+    }
+
+    @Test
+    void deveRejeitarAjusteNegativoOuAcimaDoLimite() {
+        Medicamento medicamento = medicamentoSalvo();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        assertThatThrownBy(() -> service.ajustarQuantidade("1", -21))
+                .isInstanceOf(AEP.StockLine.exception.QuantidadeInvalidaException.class);
+        assertThatThrownBy(() -> service.ajustarQuantidade("1", Integer.MAX_VALUE))
+                .isInstanceOf(AEP.StockLine.exception.QuantidadeInvalidaException.class);
+        assertThat(medicamento.getQuantidade()).isEqualTo(20);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarAjusteDiretoAposEntradasPorLote() {
+        Medicamento medicamento = medicamentoSalvo();
+        medicamento.getMovimentacoes().add(new Movimentacao("ENTRADA", "L002", 20, LocalDateTime.now()));
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        assertThatThrownBy(() -> service.ajustarQuantidade("1", 5))
+                .isInstanceOf(AEP.StockLine.exception.EstoqueException.class);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarAjusteSemQuantidadeOuMedicamento() {
+        when(repository.findById("1")).thenReturn(Optional.of(medicamentoSalvo()));
+        assertThatThrownBy(() -> service.ajustarQuantidade("1", null))
+                .isInstanceOf(AEP.StockLine.exception.EstoqueException.class);
+        assertThatThrownBy(() -> service.ajustarQuantidade("999", 5))
+                .isInstanceOf(MedicamentoNotFoundException.class);
     }
 }

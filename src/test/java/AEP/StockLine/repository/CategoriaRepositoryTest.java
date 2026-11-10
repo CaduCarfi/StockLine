@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
 @ActiveProfiles("teste")
-@Import({CategoriaService.class, MedicamentoService.class})
+@Import({CategoriaService.class, MedicamentoService.class, AEP.StockLine.mapper.MedicamentoMapper.class})
 class CategoriaRepositoryTest {
     @Autowired private CategoriaService categoriaService;
     @Autowired private MedicamentoService medicamentoService;

@@ -27,7 +27,7 @@ class BaixaServiceTest {
 
     @BeforeEach
     void preparar() {
-        service = new EntradaService(repository);
+        service = new EntradaService(repository, new AEP.StockLine.mapper.MedicamentoMapper());
         medicamento = Medicamento.builder().id("m1").quantidade(30).build();
         medicamento.getLotes().add(new Lote("L1", validade, 10));
         medicamento.getLotes().add(new Lote("L2", validade.plusMonths(1), 20));

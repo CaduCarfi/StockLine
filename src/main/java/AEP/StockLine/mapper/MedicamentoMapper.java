@@ -4,9 +4,10 @@ import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.model.Medicamento;
 
+@org.springframework.stereotype.Component
 public class MedicamentoMapper {
 
-    public static Medicamento toEntity(MedicamentoRequestDTO dto) {
+    public Medicamento toEntity(MedicamentoRequestDTO dto) {
         return Medicamento.builder()
                 .nome(dto.getNome())
                 .descricao(dto.getDescricao())
@@ -17,7 +18,7 @@ public class MedicamentoMapper {
                 .build();
     }
 
-    public static MedicamentoResponseDTO toResponseDTO(Medicamento medicamento) {
+    public MedicamentoResponseDTO toResponseDTO(Medicamento medicamento) {
         MedicamentoResponseDTO resposta = new MedicamentoResponseDTO(
                 medicamento.getId(),
                 medicamento.getNome(),
@@ -29,5 +30,13 @@ public class MedicamentoMapper {
         );
         resposta.setLotes(medicamento.getLotes());
         return resposta;
+    }
+    public void updateEntity(Medicamento medicamento, MedicamentoRequestDTO dto) {
+        medicamento.setNome(dto.getNome());
+        medicamento.setDescricao(dto.getDescricao());
+        medicamento.setQuantidade(dto.getQuantidade());
+        medicamento.setValidade(dto.getValidade());
+        medicamento.setLote(dto.getLote());
+        medicamento.setCategoriaId(dto.getCategoriaId());
     }
 }
