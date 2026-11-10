@@ -13,6 +13,7 @@ public class MedicamentoMapper {
                 .quantidade(dto.getQuantidade())
                 .validade(dto.getValidade())
                 .lote(dto.getLote())
+                .categoriaId(dto.getCategoriaId())
                 .build();
     }
 
@@ -23,7 +24,8 @@ public class MedicamentoMapper {
                 medicamento.getDescricao(),
                 medicamento.getQuantidade(),
                 medicamento.getValidade(),
-                medicamento.getLote()
+                medicamento.getLote(),
+                medicamento.getCategoriaId()
         );
     }
 }

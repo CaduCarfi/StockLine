@@ -28,4 +28,7 @@ public class MedicamentoRequestDTO {
 
     @NotBlank(message = "O lote é obrigatório")
     private String lote;
+
+    @NotBlank(message = "A categoria é obrigatória")
+    private String categoriaId;
 }

@@ -18,4 +18,6 @@ public class MedicamentoResponseDTO {
     private Integer quantidade;
     private LocalDate validade;
     private String lote;
+
+    private String categoriaId;
 }

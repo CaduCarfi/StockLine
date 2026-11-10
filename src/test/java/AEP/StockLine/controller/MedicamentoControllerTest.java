@@ -43,7 +43,7 @@ class MedicamentoControllerTest {
                 "Analgésico e antitérmico",
                 100,
                 LocalDate.of(2027, 3, 31),
-                "L001"
+                "L001", "cat1"
         );
 
         MedicamentoResponseDTO dipirona = new MedicamentoResponseDTO(
@@ -52,7 +52,7 @@ class MedicamentoControllerTest {
                 "Analgésico",
                 50,
                 LocalDate.of(2028, 8, 31),
-                "L002"
+                "L002", "cat1"
         );
 
         when(service.listarTodos()).thenReturn(List.of(paracetamol, dipirona));
@@ -87,7 +87,7 @@ class MedicamentoControllerTest {
                 "Analgésico e antitérmico",
                 100,
                 LocalDate.of(2027, 3, 31),
-                "L001"
+                "L001", "cat1"
         );
 
         when(service.buscarPorId("1")).thenReturn(paracetamol);
@@ -117,13 +117,13 @@ class MedicamentoControllerTest {
     private String dadosValidos() {
         return """
                 {"nome":"Dipirona","descricao":"Analgésico","quantidade":20,
-                 "validade":"2027-08-15","lote":"L002"}
+                 "validade":"2027-08-15","lote":"L002","categoriaId":"cat1"}
                 """;
     }
 
     private MedicamentoResponseDTO resposta() {
         return new MedicamentoResponseDTO("1", "Dipirona", "Analgésico", 20,
-                LocalDate.of(2027, 8, 15), "L002");
+                LocalDate.of(2027, 8, 15), "L002", "cat1");
     }
 
     @Test
@@ -185,5 +185,21 @@ class MedicamentoControllerTest {
         mockMvc.perform(post("/medicamentos").contentType("application/json").content(dadosInvalidos))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(service);
+    }
+
+    @Test
+    void deveRejeitarMedicamentoSemCategoria() throws Exception {
+        String dados = dadosValidos().replace(",\"categoriaId\":\"cat1\"", "");
+        mockMvc.perform(post("/medicamentos").contentType("application/json").content(dados))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void deveRetornar404QuandoCategoriaNaoExiste() throws Exception {
+        when(service.criar(any())).thenThrow(new AEP.StockLine.exception.CategoriaNotFoundException("cat1"));
+        mockMvc.perform(post("/medicamentos").contentType("application/json").content(dadosValidos()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensagem").value("Categoria não encontrada com o id: cat1"));
     }
 }
