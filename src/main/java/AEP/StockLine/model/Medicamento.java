@@ -8,6 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "medicamentos")
 @Data
@@ -24,4 +26,12 @@ public class Medicamento {
     private Integer quantidade;
     private LocalDate validade;
     private String lote;
+
+    private String categoriaId;
+
+    @Builder.Default
+    private List<Lote> lotes = new ArrayList<>();
+
+    @Builder.Default
+    private List<Movimentacao> movimentacoes = new ArrayList<>();
 }
