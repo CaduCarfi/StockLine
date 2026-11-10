@@ -356,7 +356,7 @@ Medicamento inexistente retorna 404. Dados inválidos retornam 400.
 
 Lotes e movimentações são subdocumentos do medicamento. Cada entrada registra tipo `ENTRADA`,
 lote, quantidade e data, salvos junto com o saldo no mesmo documento MongoDB.
-A consulta do histórico e as baixas ficam para os próximos cartões.
+A consulta do histórico fica para o próximo cartão. As baixas estão descritas na seção seguinte.
 
 Na primeira entrada, o saldo já existente no cadastro é colocado no lote original, sem perder
 quantidade nem inventar uma entrada retroativa. Antes disso, a lista de lotes pode estar vazia.
@@ -376,3 +376,35 @@ Tente outra entrada no L001 com validade diferente: ela deve ser rejeitada sem a
 O serviço processa uma entrada por vez nesta instância. A PoC considera uma única instância da aplicação.
 O limite técnico do total é o máximo de um Integer Java; não foi definido um limite de negócio.
 Os testes de repositório verificam os lotes e as movimentações gravados no MongoDB.
+
+
+## Baixas de estoque por lote
+
+Use `POST /medicamentos/{id}/baixas`, escolhendo o lote manualmente:
+
+```json
+{
+  "lote": "L001",
+  "quantidade": 5
+}
+```
+
+A quantidade precisa ser positiva e não pode superar o saldo do lote escolhido, mesmo que haja
+saldo em outros lotes. Lote e quantidade são obrigatórios. Não é preciso informar a validade.
+Uma baixa válida retorna 200 com o medicamento e os lotes atualizados.
+O saldo do lote é reduzido, o total do medicamento é recalculado e uma movimentação `BAIXA`
+é salva com lote, quantidade e data no mesmo documento MongoDB.
+
+Quantidade inválida, lote inexistente e saldo insuficiente retornam 400 sem salvar alterações.
+Medicamento inexistente retorna 404. É possível zerar o lote, que permanece no cadastro.
+A baixa também é permitida para lotes vencidos, por exemplo para descarte.
+Cadastros antigos aproveitam o lote e o saldo originais, seguindo a mesma regra das entradas.
+
+Exemplo: registre 20 unidades no L001 e 10 no L002; baixe 5 do L001.
+Os saldos serão 15 e 10, com total 25. Uma tentativa de baixar 16 do L001 deve ser rejeitada,
+mesmo havendo 25 unidades no total. Depois, baixar 15 do L001 deve deixar esse lote zerado.
+
+Entradas e baixas usam o mesmo serviço, que processa uma movimentação por vez nesta instância.
+Esta PoC considera uma única instância em execução. A consulta do histórico será feita em outro cartão.
+Os testes verificam a baixa, o lote escolhido, os limites de saldo, a preservação de dados em erros
+e a persistência do saldo junto com a movimentação no MongoDB.

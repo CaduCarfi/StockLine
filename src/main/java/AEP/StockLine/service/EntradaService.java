@@ -1,6 +1,7 @@
 package AEP.StockLine.service;
 
 import AEP.StockLine.dto.EntradaRequestDTO;
+import AEP.StockLine.dto.BaixaRequestDTO;
 import AEP.StockLine.dto.MedicamentoResponseDTO;
 import AEP.StockLine.exception.EstoqueException;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
@@ -60,6 +61,44 @@ public class EntradaService {
         return MedicamentoMapper.toResponseDTO(salvo);
     }
 
+    public synchronized MedicamentoResponseDTO registrarBaixa(String id, BaixaRequestDTO dto) {
+        if (dto.getQuantidade() == null || dto.getQuantidade() <= 0) {
+            throw new EstoqueException("A quantidade deve ser maior que zero.");
+        }
+        if (dto.getLote() == null || dto.getLote().isBlank()) {
+            throw new EstoqueException("Informe o lote.");
+        }
+        Medicamento medicamento = repository.findById(id)
+                .orElseThrow(() -> new MedicamentoNotFoundException(id));
+        prepararLotes(medicamento);
+
+        Lote loteEncontrado = null;
+        for (Lote lote : medicamento.getLotes()) {
+            if (lote.getCodigo().equals(dto.getLote())) {
+                loteEncontrado = lote;
+                break;
+            }
+        }
+        if (loteEncontrado == null) {
+            throw new EstoqueException("Lote não encontrado neste medicamento.");
+        }
+        if (dto.getQuantidade() > loteEncontrado.getSaldo()) {
+            throw new EstoqueException("A quantidade da baixa é maior que o saldo do lote.");
+        }
+
+        loteEncontrado.setSaldo(loteEncontrado.getSaldo() - dto.getQuantidade());
+        int total = 0;
+        for (Lote lote : medicamento.getLotes()) {
+            total += lote.getSaldo();
+        }
+        medicamento.setQuantidade(total);
+        medicamento.getMovimentacoes().add(new Movimentacao(
+                "BAIXA", dto.getLote(), dto.getQuantidade(), LocalDateTime.now()));
+
+        Medicamento salvo = repository.save(medicamento);
+        return MedicamentoMapper.toResponseDTO(salvo);
+    }
+
     private void prepararLotes(Medicamento medicamento) {
         if (medicamento.getLotes() == null) {
             medicamento.setLotes(new ArrayList<>());
@@ -67,11 +106,11 @@ public class EntradaService {
         if (medicamento.getMovimentacoes() == null) {
             medicamento.setMovimentacoes(new ArrayList<>());
         }
-        // Mantém o saldo que já existia antes da primeira entrada por lote.
+        // Mantém o saldo que já existia antes da primeira movimentação por lote.
         if (medicamento.getLotes().isEmpty() && medicamento.getQuantidade() != null
                 && medicamento.getQuantidade() > 0) {
             if (medicamento.getLote() == null || medicamento.getValidade() == null) {
-                throw new EstoqueException("Atualize o lote e a validade do cadastro antes de registrar entradas.");
+                throw new EstoqueException("Atualize o lote e a validade do cadastro antes de movimentar o estoque.");
             }
             medicamento.getLotes().add(new Lote(medicamento.getLote(),
                     medicamento.getValidade(), medicamento.getQuantidade()));
