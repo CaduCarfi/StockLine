@@ -63,4 +63,10 @@ public class MedicamentoController {
         service.deletar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Lista medicamentos com estoque igual ou abaixo do mínimo")
+    @GetMapping("/estoque-baixo")
+    public ResponseEntity<List<MedicamentoResponseDTO>> listarEstoqueBaixo() {
+        return ResponseEntity.ok(service.listarEstoqueBaixo());
+    }
 }

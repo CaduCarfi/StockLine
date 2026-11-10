@@ -76,4 +76,14 @@ public class MedicamentoService {
 
         medicamentoRepository.deleteById(id);
     }
+
+    public List<MedicamentoResponseDTO> listarEstoqueBaixo() {
+        return medicamentoRepository.findAll()
+                .stream()
+                .filter(m -> m.getEstoqueMinimo() != null
+                        && m.getQuantidade() != null
+                        && m.getQuantidade() <= m.getEstoqueMinimo())
+                .map(medicamentoMapper::toResponseDTO)
+                .toList();
+    }
 }
