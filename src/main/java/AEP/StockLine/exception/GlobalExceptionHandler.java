@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -14,23 +16,36 @@ public class GlobalExceptionHandler {
             MedicamentoNotFoundException excecao) {
 
         ErroResponseDTO erro = new ErroResponseDTO(
+                LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
                 excecao.getMessage()
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
     }
 
-    // Novo: trata o ajuste de quantidade inválido, devolvendo 400 em vez de 500
-    @ExceptionHandler(QuantidadeInvalidaException.class)
-    public ResponseEntity<ErroResponseDTO> tratarQuantidadeInvalida(
-            QuantidadeInvalidaException excecao) {
-
+    @ExceptionHandler(CategoriaNotFoundException.class)
+    public ResponseEntity<ErroResponseDTO> tratarCategoriaNaoEncontrada(CategoriaNotFoundException excecao) {
         ErroResponseDTO erro = new ErroResponseDTO(
-                HttpStatus.BAD_REQUEST.value(),   // 400
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
                 excecao.getMessage()
         );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+    }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+    @ExceptionHandler(EstoqueException.class)
+    public ResponseEntity<ErroResponseDTO> tratarEstoque(EstoqueException excecao) {
+        ErroResponseDTO erro = new ErroResponseDTO(
+                LocalDateTime.now(), 400, "Bad Request", excecao.getMessage());
+        return ResponseEntity.badRequest().body(erro);
+    }
+    @ExceptionHandler(QuantidadeInvalidaException.class)
+    public ResponseEntity<ErroResponseDTO> tratarQuantidadeInvalida(QuantidadeInvalidaException excecao) {
+        ErroResponseDTO erro = new ErroResponseDTO(
+                LocalDateTime.now(), 400, "Bad Request", excecao.getMessage());
+        return ResponseEntity.badRequest().body(erro);
     }
 }
