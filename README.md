@@ -356,7 +356,7 @@ Medicamento inexistente retorna 404. Dados inválidos retornam 400.
 
 Lotes e movimentações são subdocumentos do medicamento. Cada entrada registra tipo `ENTRADA`,
 lote, quantidade e data, salvos junto com o saldo no mesmo documento MongoDB.
-A consulta do histórico fica para o próximo cartão. As baixas estão descritas na seção seguinte.
+A consulta do histórico está descrita na seção Histórico de movimentações. As baixas estão descritas na seção seguinte.
 
 Na primeira entrada, o saldo já existente no cadastro é colocado no lote original, sem perder
 quantidade nem inventar uma entrada retroativa. Antes disso, a lista de lotes pode estar vazia.
@@ -405,6 +405,41 @@ Os saldos serão 15 e 10, com total 25. Uma tentativa de baixar 16 do L001 deve 
 mesmo havendo 25 unidades no total. Depois, baixar 15 do L001 deve deixar esse lote zerado.
 
 Entradas e baixas usam o mesmo serviço, que processa uma movimentação por vez nesta instância.
-Esta PoC considera uma única instância em execução. A consulta do histórico será feita em outro cartão.
+Esta PoC considera uma única instância em execução. A consulta do histórico está descrita na seção seguinte.
 Os testes verificam a baixa, o lote escolhido, os limites de saldo, a preservação de dados em erros
 e a persistência do saldo junto com a movimentação no MongoDB.
+
+
+## Histórico de movimentações
+
+Use `GET /medicamentos/{id}/historico` para consultar as entradas e baixas do medicamento.
+
+Exemplo de resposta (200):
+
+```json
+[
+  {
+    "tipo": "BAIXA",
+    "lote": "L001",
+    "quantidade": 5,
+    "data": "2026-11-09T11:00:00"
+  },
+  {
+    "tipo": "ENTRADA",
+    "lote": "L001",
+    "quantidade": 20,
+    "data": "2026-11-09T10:00:00"
+  }
+]
+```
+
+As movimentações aparecem da data mais recente para a mais antiga. Se as datas forem iguais,
+a última registrada aparece primeiro. A consulta não altera os registros salvos no MongoDB.
+Um medicamento sem movimentações retorna uma lista vazia (`[]`) com status 200.
+Um medicamento inexistente retorna 404. O saldo antigo do cadastro não aparece como entrada
+retroativa: são mostradas apenas as entradas e baixas que foram registradas.
+
+Para demonstrar: registre uma entrada de 20 unidades e uma baixa de 5 no mesmo lote.
+Consulte o histórico usando o ID desse medicamento: a baixa deve aparecer antes da entrada.
+Os testes verificam a ordem por data, empates, histórico vazio, medicamento inexistente e
+a consulta das entradas e baixas persistidas no MongoDB.
