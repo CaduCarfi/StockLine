@@ -24,4 +24,5 @@ public class Medicamento {
     private Integer quantidade;
     private LocalDate validade;
     private String lote;
+    private Integer estoqueMinimo;
 }
