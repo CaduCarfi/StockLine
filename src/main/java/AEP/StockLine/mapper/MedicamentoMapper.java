@@ -15,6 +15,7 @@ public class MedicamentoMapper {
                 .quantidade(dto.getQuantidade())
                 .validade(dto.getValidade())
                 .lote(dto.getLote())
+                .estoqueMinimo(dto.getEstoqueMinimo())
                 .build();
     }
 
@@ -24,6 +25,7 @@ public class MedicamentoMapper {
         medicamento.setQuantidade(dto.getQuantidade());
         medicamento.setValidade(dto.getValidade());
         medicamento.setLote(dto.getLote());
+        medicamento.setEstoqueMinimo(dto.getEstoqueMinimo());
     }
 
     public MedicamentoResponseDTO toResponseDTO(Medicamento medicamento) {
@@ -33,7 +35,8 @@ public class MedicamentoMapper {
                 medicamento.getDescricao(),
                 medicamento.getQuantidade(),
                 medicamento.getValidade(),
-                medicamento.getLote()
+                medicamento.getLote(),
+                medicamento.getEstoqueMinimo()
         );
     }
 }
