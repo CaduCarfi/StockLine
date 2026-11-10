@@ -333,3 +333,46 @@ Medicamentos antigos continuam consultáveis; para editá-los, informe uma categ
 
 Os testes verificam cadastro, listagem, validação do nome, vínculo e categoria inexistente.
 O teste de repositório também verifica as duas coleções no MongoDB e a referência persistida.
+
+
+## Entradas de estoque por lote
+
+Use `POST /medicamentos/{id}/entradas` para registrar uma entrada:
+
+```json
+{
+  "lote": "L001",
+  "validade": "2027-08-15",
+  "quantidade": 20
+}
+```
+
+A quantidade precisa ser maior que zero. O lote e a validade são obrigatórios.
+Se o lote não existe, ele é criado. Se já existe, seu saldo é aumentado, mantendo a mesma validade.
+Uma validade diferente para o mesmo lote retorna 400 e não altera o banco.
+A API retorna 200 com o medicamento atualizado, incluindo a lista `lotes` (código, validade e saldo).
+O campo `quantidade` representa a soma dos saldos de todos os lotes.
+Medicamento inexistente retorna 404. Dados inválidos retornam 400.
+
+Lotes e movimentações são subdocumentos do medicamento. Cada entrada registra tipo `ENTRADA`,
+lote, quantidade e data, salvos junto com o saldo no mesmo documento MongoDB.
+A consulta do histórico e as baixas ficam para os próximos cartões.
+
+Na primeira entrada, o saldo já existente no cadastro é colocado no lote original, sem perder
+quantidade nem inventar uma entrada retroativa. Antes disso, a lista de lotes pode estar vazia.
+Se o cadastro com saldo não tiver lote ou validade, corrija esses campos pelo PUT antes de registrar a entrada.
+Para iniciar sem estoque, cadastre o medicamento com quantidade zero.
+Os campos antigos `lote` e `validade` continuam representando o cadastro inicial; consulte `lotes`
+para ver o saldo e a validade de cada lote após as entradas.
+
+Após registrar entradas, o PUT permite editar os dados cadastrais, mas quantidade, lote e validade
+devem permanecer iguais aos atuais. O medicamento com movimentações também não pode ser excluído,
+para preservar os registros (retorno 400).
+
+Exemplo de demonstração: partindo de quantidade zero, registre 20 unidades no L001, mais 10 no mesmo
+lote com a mesma validade, e 15 no L002. O total será 45, com saldos 30 no L001 e 15 no L002.
+Tente outra entrada no L001 com validade diferente: ela deve ser rejeitada sem alterar o estoque.
+
+O serviço processa uma entrada por vez nesta instância. A PoC considera uma única instância da aplicação.
+O limite técnico do total é o máximo de um Integer Java; não foi definido um limite de negócio.
+Os testes de repositório verificam os lotes e as movimentações gravados no MongoDB.

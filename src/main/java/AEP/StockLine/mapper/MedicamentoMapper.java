@@ -18,7 +18,7 @@ public class MedicamentoMapper {
     }
 
     public static MedicamentoResponseDTO toResponseDTO(Medicamento medicamento) {
-        return new MedicamentoResponseDTO(
+        MedicamentoResponseDTO resposta = new MedicamentoResponseDTO(
                 medicamento.getId(),
                 medicamento.getNome(),
                 medicamento.getDescricao(),
@@ -27,5 +27,7 @@ public class MedicamentoMapper {
                 medicamento.getLote(),
                 medicamento.getCategoriaId()
         );
+        resposta.setLotes(medicamento.getLotes());
+        return resposta;
     }
 }

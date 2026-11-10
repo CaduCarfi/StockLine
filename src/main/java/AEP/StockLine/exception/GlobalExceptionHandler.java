@@ -35,4 +35,11 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
     }
+
+    @ExceptionHandler(EstoqueException.class)
+    public ResponseEntity<ErroResponseDTO> tratarEstoque(EstoqueException excecao) {
+        ErroResponseDTO erro = new ErroResponseDTO(
+                LocalDateTime.now(), 400, "Bad Request", excecao.getMessage());
+        return ResponseEntity.badRequest().body(erro);
+    }
 }
