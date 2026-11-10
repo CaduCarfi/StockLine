@@ -28,4 +28,8 @@ public class MedicamentoRequestDTO {
 
     @NotBlank(message = "O lote é obrigatório")
     private String lote;
+
+    @NotNull(message = "Estoque minimo é obrigatório")
+    @Min(value = 0, message = "O estoque mínimo não pode ser negativo")
+    private Integer estoqueMinimo;
 }
