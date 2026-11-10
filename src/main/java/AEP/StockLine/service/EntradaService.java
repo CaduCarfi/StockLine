@@ -17,9 +17,11 @@ import java.util.ArrayList;
 @Service
 public class EntradaService {
     private final MedicamentoRepository repository;
+    private final MedicamentoMapper mapper;
 
-    public EntradaService(MedicamentoRepository repository) {
+    public EntradaService(MedicamentoRepository repository, MedicamentoMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
     public synchronized MedicamentoResponseDTO registrar(String id, EntradaRequestDTO dto) {
@@ -58,7 +60,7 @@ public class EntradaService {
                 "ENTRADA", dto.getLote(), dto.getQuantidade(), LocalDateTime.now()));
 
         Medicamento salvo = repository.save(medicamento);
-        return MedicamentoMapper.toResponseDTO(salvo);
+        return mapper.toResponseDTO(salvo);
     }
 
     public synchronized MedicamentoResponseDTO registrarBaixa(String id, BaixaRequestDTO dto) {
@@ -96,7 +98,7 @@ public class EntradaService {
                 "BAIXA", dto.getLote(), dto.getQuantidade(), LocalDateTime.now()));
 
         Medicamento salvo = repository.save(medicamento);
-        return MedicamentoMapper.toResponseDTO(salvo);
+        return mapper.toResponseDTO(salvo);
     }
 
     private void prepararLotes(Medicamento medicamento) {

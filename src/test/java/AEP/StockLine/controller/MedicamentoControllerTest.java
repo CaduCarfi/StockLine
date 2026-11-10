@@ -236,4 +236,21 @@ class MedicamentoControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Medicamento não encontrado com o id: 999"));
     }
+
+    @Test
+    void deveManterRotaDeAjusteDeQuantidade() throws Exception {
+        when(service.ajustarQuantidade("1", 5)).thenReturn(resposta());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .patch("/medicamentos/1/quantidade").contentType("application/json").content("{\"delta\":5}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value("1"));
+    }
+
+    @Test
+    void deveRetornar400ParaAjusteInvalido() throws Exception {
+        when(service.ajustarQuantidade("1", -100))
+                .thenThrow(new AEP.StockLine.exception.QuantidadeInvalidaException("1", -100));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .patch("/medicamentos/1/quantidade").contentType("application/json").content("{\"delta\":-100}"))
+                .andExpect(status().isBadRequest());
+    }
 }
