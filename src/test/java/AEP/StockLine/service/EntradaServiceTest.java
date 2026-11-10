@@ -30,7 +30,7 @@ class EntradaServiceTest {
 
     @BeforeEach
     void preparar() {
-        service = new EntradaService(repository);
+        service = new EntradaService(repository, new AEP.StockLine.mapper.MedicamentoMapper());
         medicamento = Medicamento.builder().id("m1").quantidade(0).build();
     }
 
@@ -148,7 +148,7 @@ class EntradaServiceTest {
     void naoDeveApagarHistoricoNemAlterarSaldoPeloCadastro() {
         simularBanco();
         service.registrar("m1", new EntradaRequestDTO("L1", validade, 10));
-        MedicamentoService cadastro = new MedicamentoService(repository, categorias);
+        MedicamentoService cadastro = new MedicamentoService(repository, categorias, new AEP.StockLine.mapper.MedicamentoMapper());
         assertThatThrownBy(() -> cadastro.excluir("m1")).isInstanceOf(EstoqueException.class);
         when(categorias.existsById("cat1")).thenReturn(true);
         var dados = new MedicamentoRequestDTO("Dipirona", null, 0, validade, "L1", "cat1");

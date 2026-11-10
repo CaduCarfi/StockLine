@@ -22,31 +22,33 @@ import AEP.StockLine.exception.EstoqueException;
 public class MedicamentoService {
 
     private final MedicamentoRepository repository;
+    private final MedicamentoMapper mapper;
     private final CategoriaRepository categoriaRepository;
 
-    public MedicamentoService(MedicamentoRepository repository, CategoriaRepository categoriaRepository) {
+    public MedicamentoService(MedicamentoRepository repository, CategoriaRepository categoriaRepository, MedicamentoMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
         this.categoriaRepository = categoriaRepository;
     }
 
     public List<MedicamentoResponseDTO> listarTodos() {
         return repository.findAll()
                 .stream()
-                .map(MedicamentoMapper::toResponseDTO)
+                .map(mapper::toResponseDTO)
                 .toList();
     }
 
     public MedicamentoResponseDTO buscarPorId(String id) {
         return repository.findById(id)
-                .map(MedicamentoMapper::toResponseDTO)
+                .map(mapper::toResponseDTO)
                 .orElseThrow(() -> new MedicamentoNotFoundException(id));
     }
 
     public MedicamentoResponseDTO criar(MedicamentoRequestDTO dto) {
         validarCategoria(dto.getCategoriaId());
-        Medicamento medicamento = MedicamentoMapper.toEntity(dto);
+        Medicamento medicamento = mapper.toEntity(dto);
         Medicamento salvo = repository.save(medicamento);
-        return MedicamentoMapper.toResponseDTO(salvo);
+        return mapper.toResponseDTO(salvo);
     }
 
     public MedicamentoResponseDTO atualizar(String id, MedicamentoRequestDTO dto) {
@@ -60,15 +62,10 @@ public class MedicamentoService {
                 || !Objects.equals(medicamento.getValidade(), dto.getValidade()))) {
             throw new EstoqueException("Use as movimentações para alterar o estoque deste medicamento.");
         }
-        medicamento.setNome(dto.getNome());
-        medicamento.setDescricao(dto.getDescricao());
-        medicamento.setQuantidade(dto.getQuantidade());
-        medicamento.setValidade(dto.getValidade());
-        medicamento.setLote(dto.getLote());
-        medicamento.setCategoriaId(dto.getCategoriaId());
+        mapper.updateEntity(medicamento, dto);
 
         Medicamento atualizado = repository.save(medicamento);
-        return MedicamentoMapper.toResponseDTO(atualizado);
+        return mapper.toResponseDTO(atualizado);
     }
 
     public void excluir(String id) {
@@ -98,5 +95,22 @@ public class MedicamentoService {
         if (!categoriaRepository.existsById(categoriaId)) {
             throw new CategoriaNotFoundException(categoriaId);
         }
+    }
+
+    public MedicamentoResponseDTO ajustarQuantidade(String id, Integer delta) {
+        Medicamento medicamento = repository.findById(id)
+                .orElseThrow(() -> new MedicamentoNotFoundException(id));
+        if (medicamento.getMovimentacoes() != null && !medicamento.getMovimentacoes().isEmpty()) {
+            throw new EstoqueException("Use entradas e baixas para alterar o estoque deste medicamento.");
+        }
+        if (delta == null) {
+            throw new EstoqueException("Informe o ajuste de quantidade.");
+        }
+        long novaQuantidade = (long) medicamento.getQuantidade() + delta;
+        if (novaQuantidade < 0 || novaQuantidade > Integer.MAX_VALUE) {
+            throw new AEP.StockLine.exception.QuantidadeInvalidaException(id, delta);
+        }
+        medicamento.setQuantidade((int) novaQuantidade);
+        return mapper.toResponseDTO(repository.save(medicamento));
     }
 }

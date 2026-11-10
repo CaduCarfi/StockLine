@@ -42,4 +42,10 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(), 400, "Bad Request", excecao.getMessage());
         return ResponseEntity.badRequest().body(erro);
     }
+    @ExceptionHandler(QuantidadeInvalidaException.class)
+    public ResponseEntity<ErroResponseDTO> tratarQuantidadeInvalida(QuantidadeInvalidaException excecao) {
+        ErroResponseDTO erro = new ErroResponseDTO(
+                LocalDateTime.now(), 400, "Bad Request", excecao.getMessage());
+        return ResponseEntity.badRequest().body(erro);
+    }
 }
