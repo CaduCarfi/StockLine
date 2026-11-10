@@ -13,7 +13,16 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,5 +112,78 @@ class MedicamentoControllerTest {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.erro").value("Not Found"))
                 .andExpect(jsonPath("$.mensagem").value("Medicamento não encontrado com o id: 999"));
+    }
+
+    private String dadosValidos() {
+        return """
+                {"nome":"Dipirona","descricao":"Analgésico","quantidade":20,
+                 "validade":"2027-08-15","lote":"L002"}
+                """;
+    }
+
+    private MedicamentoResponseDTO resposta() {
+        return new MedicamentoResponseDTO("1", "Dipirona", "Analgésico", 20,
+                LocalDate.of(2027, 8, 15), "L002");
+    }
+
+    @Test
+    void deveCadastrarComStatus201() throws Exception {
+        when(service.criar(any())).thenReturn(resposta());
+        mockMvc.perform(post("/medicamentos").contentType("application/json").content(dadosValidos()))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/medicamentos/1"))
+                .andExpect(jsonPath("$.id").value("1"));
+    }
+
+    @Test
+    void deveAtualizarComStatus200() throws Exception {
+        when(service.atualizar(eq("1"), any())).thenReturn(resposta());
+        mockMvc.perform(put("/medicamentos/1").contentType("application/json").content(dadosValidos()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Dipirona"));
+    }
+
+    @Test
+    void deveExcluirComStatus204() throws Exception {
+        mockMvc.perform(delete("/medicamentos/1")).andExpect(status().isNoContent());
+        verify(service).excluir("1");
+    }
+
+    @Test
+    void deveRetornar404AoAtualizarInexistente() throws Exception {
+        when(service.atualizar(eq("999"), any())).thenThrow(new MedicamentoNotFoundException("999"));
+        mockMvc.perform(put("/medicamentos/999").contentType("application/json").content(dadosValidos()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deveRetornar404AoExcluirInexistente() throws Exception {
+        doThrow(new MedicamentoNotFoundException("999")).when(service).excluir("999");
+        mockMvc.perform(delete("/medicamentos/999")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deveRejeitarCadastroSemCamposObrigatorios() throws Exception {
+        mockMvc.perform(post("/medicamentos").contentType("application/json").content("{}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void deveRejeitarQuantidadeNegativaNoCadastroENaEdicao() throws Exception {
+        String dadosInvalidos = dadosValidos().replace("\"quantidade\":20", "\"quantidade\":-1");
+        mockMvc.perform(post("/medicamentos").contentType("application/json").content(dadosInvalidos))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/medicamentos/1").contentType("application/json").content(dadosInvalidos))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void deveRejeitarNomeELoteEmBranco() throws Exception {
+        String dadosInvalidos = dadosValidos().replace("Dipirona", " ").replace("L002", " ");
+        mockMvc.perform(post("/medicamentos").contentType("application/json").content(dadosInvalidos))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
     }
 }

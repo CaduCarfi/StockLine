@@ -259,3 +259,41 @@ Projeto desenvolvido como parte da atividade acadêmica, utilizando práticas de
 📄 Licença
 
 Este projeto foi desenvolvido para fins acadêmicos.
+
+
+## CRUD de medicamentos
+
+| Método | Rota | Resultado |
+| --- | --- | --- |
+| POST | /medicamentos | Cadastra e retorna 201 com o endereço no cabeçalho Location |
+| GET | /medicamentos | Lista os medicamentos |
+| GET | /medicamentos/{id} | Consulta um medicamento |
+| PUT | /medicamentos/{id} | Atualiza todos os dados cadastrais e retorna 200 |
+| DELETE | /medicamentos/{id} | Exclui e retorna 204 sem conteúdo |
+
+Corpo para cadastro e atualização:
+
+```json
+{
+  "nome": "Dipirona",
+  "descricao": "Analgésico",
+  "quantidade": 20,
+  "validade": "2027-08-15",
+  "lote": "L002"
+}
+```
+
+Nome, quantidade, validade e lote são obrigatórios. A descrição é opcional.
+A quantidade pode ser zero, mas não negativa. Dados inválidos retornam 400.
+Consultar, atualizar ou excluir um ID inexistente retorna 404.
+O PUT mantém o ID e substitui os dados pelos valores enviados.
+Este cartão implementa apenas o cadastro: categorias e movimentações ficam para os próximos cartões.
+
+Testes de serviço e API, sem MongoDB:
+
+```powershell
+.\mvnw.cmd "-Dtest=MedicamentoServiceTest,MedicamentoControllerTest" test
+```
+
+Para executar a suíte completa, configure `MONGODB_TEST_URI` apontando para um banco
+exclusivo de testes e execute `.\mvnw.cmd clean test`. Os testes de repositório limpam esse banco.

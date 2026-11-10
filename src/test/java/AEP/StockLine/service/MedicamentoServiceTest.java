@@ -1,6 +1,7 @@
 package AEP.StockLine.service;
 
 import AEP.StockLine.dto.MedicamentoResponseDTO;
+import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
@@ -17,6 +18,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,5 +131,76 @@ class MedicamentoServiceTest {
                 .hasMessageContaining("999");
 
         verify(repository).findById("999");
+    }
+
+    private MedicamentoRequestDTO novoMedicamento() {
+        return new MedicamentoRequestDTO("Dipirona", "Analgésico", 20,
+                LocalDate.of(2027, 8, 15), "L002");
+    }
+
+    @Test
+    void deveCadastrarMedicamento() {
+        Medicamento salvo = medicamentoSalvo();
+        when(repository.save(any(Medicamento.class))).thenReturn(salvo);
+
+        MedicamentoResponseDTO resultado = service.criar(novoMedicamento());
+
+        assertThat(resultado.getId()).isEqualTo("1");
+        assertThat(resultado.getNome()).isEqualTo("Dipirona");
+        ArgumentCaptor<Medicamento> captor = ArgumentCaptor.forClass(Medicamento.class);
+        verify(repository).save(captor.capture());
+        Medicamento recebido = captor.getValue();
+        assertThat(recebido.getId()).isNull();
+        assertThat(recebido.getNome()).isEqualTo("Dipirona");
+        assertThat(recebido.getDescricao()).isEqualTo("Analgésico");
+        assertThat(recebido.getQuantidade()).isEqualTo(20);
+        assertThat(recebido.getValidade()).isEqualTo(LocalDate.of(2027, 8, 15));
+        assertThat(recebido.getLote()).isEqualTo("L002");
+    }
+
+    private Medicamento medicamentoSalvo() {
+        return Medicamento.builder().id("1").nome("Dipirona").descricao("Analgésico")
+                .quantidade(20).validade(LocalDate.of(2027, 8, 15)).lote("L002").build();
+    }
+
+    @Test
+    void deveAtualizarMedicamentoPreservandoId() {
+        Medicamento existente = Medicamento.builder().id("1").nome("Nome antigo").build();
+        when(repository.findById("1")).thenReturn(Optional.of(existente));
+        when(repository.save(existente)).thenReturn(existente);
+
+        MedicamentoResponseDTO resultado = service.atualizar("1", novoMedicamento());
+
+        assertThat(resultado.getId()).isEqualTo("1");
+        assertThat(resultado.getNome()).isEqualTo("Dipirona");
+        assertThat(resultado.getDescricao()).isEqualTo("Analgésico");
+        assertThat(resultado.getQuantidade()).isEqualTo(20);
+        assertThat(resultado.getValidade()).isEqualTo(LocalDate.of(2027, 8, 15));
+        assertThat(resultado.getLote()).isEqualTo("L002");
+        verify(repository).save(existente);
+    }
+
+    @Test
+    void naoDeveAtualizarMedicamentoInexistente() {
+        assertThatThrownBy(() -> service.atualizar("999", novoMedicamento()))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void deveExcluirMedicamento() {
+        Medicamento medicamento = Medicamento.builder().id("1").build();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+
+        service.excluir("1");
+
+        verify(repository).delete(medicamento);
+    }
+
+    @Test
+    void naoDeveExcluirMedicamentoInexistente() {
+        assertThatThrownBy(() -> service.excluir("999"))
+                .isInstanceOf(MedicamentoNotFoundException.class);
+        verify(repository, never()).delete(any(Medicamento.class));
     }
 }
