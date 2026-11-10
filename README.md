@@ -16,7 +16,7 @@ Busca de medicamentos
 Edição de medicamentos
 Controle de quantidade em estoque
 Baixa de estoque
-Persistência dos dados em uma única coleção MongoDB
+Persistência de medicamentos e categorias em duas coleções MongoDB
 Testes automatizados
 Análise de cobertura de testes
 
@@ -111,7 +111,7 @@ Estoque
  Controle de quantidade
  Baixa de estoque
 Banco de dados
- Uma única coleção MongoDB
+ Coleções medicamentos e categorias
  Documentos simples e homogêneos
 Qualidade
  Testes automatizados
@@ -287,7 +287,7 @@ Nome, quantidade, validade e lote são obrigatórios. A descrição é opcional.
 A quantidade pode ser zero, mas não negativa. Dados inválidos retornam 400.
 Consultar, atualizar ou excluir um ID inexistente retorna 404.
 O PUT mantém o ID e substitui os dados pelos valores enviados.
-Este cartão implementa apenas o cadastro: categorias e movimentações ficam para os próximos cartões.
+Este cartão implementa apenas o cadastro: o vínculo com categorias está descrito na seção seguinte; movimentações ficam para os próximos cartões.
 
 Testes de serviço e API, sem MongoDB:
 
@@ -297,3 +297,39 @@ Testes de serviço e API, sem MongoDB:
 
 Para executar a suíte completa, configure `MONGODB_TEST_URI` apontando para um banco
 exclusivo de testes e execute `.\mvnw.cmd clean test`. Os testes de repositório limpam esse banco.
+
+## Categorias e vínculo com medicamentos
+
+As categorias ficam na coleção `categorias`, com ID e nome.
+Cada medicamento guarda o ID da categoria no campo `categoriaId`.
+
+1. Cadastre uma categoria em `POST /categorias`:
+
+```json
+{"nome":"Analgésicos"}
+```
+
+A API retorna 201 com o ID gerado e o nome. O nome é obrigatório e não pode estar em branco.
+Use `GET /categorias` para listar as categorias (200, ou uma lista vazia se não houver cadastros).
+
+2. Use o ID retornado ao cadastrar ou editar um medicamento:
+
+```json
+{
+  "nome": "Dipirona",
+  "descricao": "Analgésico",
+  "quantidade": 20,
+  "validade": "2027-08-15",
+  "lote": "L002",
+  "categoriaId": "ID_DA_CATEGORIA"
+}
+```
+
+O campo `categoriaId` é obrigatório em `POST /medicamentos` e `PUT /medicamentos/{id}`.
+A categoria precisa existir: caso contrário, a API retorna 404 sem salvar ou alterar o medicamento.
+Campo ausente ou em branco retorna 400. As consultas de medicamentos também retornam `categoriaId`.
+É possível mudar a categoria usando o PUT, informando os demais dados do medicamento.
+Medicamentos antigos continuam consultáveis; para editá-los, informe uma categoria válida.
+
+Os testes verificam cadastro, listagem, validação do nome, vínculo e categoria inexistente.
+O teste de repositório também verifica as duas coleções no MongoDB e a referência persistida.

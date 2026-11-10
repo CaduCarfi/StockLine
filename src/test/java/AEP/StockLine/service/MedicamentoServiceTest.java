@@ -5,6 +5,8 @@ import AEP.StockLine.dto.MedicamentoRequestDTO;
 import AEP.StockLine.exception.MedicamentoNotFoundException;
 import AEP.StockLine.model.Medicamento;
 import AEP.StockLine.repository.MedicamentoRepository;
+import AEP.StockLine.repository.CategoriaRepository;
+import AEP.StockLine.exception.CategoriaNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +30,9 @@ class MedicamentoServiceTest {
 
     @Mock
     private MedicamentoRepository repository;
+
+    @Mock
+    private CategoriaRepository categoriaRepository;
 
     @InjectMocks
     private MedicamentoService service;
@@ -135,11 +140,12 @@ class MedicamentoServiceTest {
 
     private MedicamentoRequestDTO novoMedicamento() {
         return new MedicamentoRequestDTO("Dipirona", "Analgésico", 20,
-                LocalDate.of(2027, 8, 15), "L002");
+                LocalDate.of(2027, 8, 15), "L002", "cat1");
     }
 
     @Test
     void deveCadastrarMedicamento() {
+        when(categoriaRepository.existsById("cat1")).thenReturn(true);
         Medicamento salvo = medicamentoSalvo();
         when(repository.save(any(Medicamento.class))).thenReturn(salvo);
 
@@ -151,6 +157,7 @@ class MedicamentoServiceTest {
         verify(repository).save(captor.capture());
         Medicamento recebido = captor.getValue();
         assertThat(recebido.getId()).isNull();
+        assertThat(recebido.getCategoriaId()).isEqualTo("cat1");
         assertThat(recebido.getNome()).isEqualTo("Dipirona");
         assertThat(recebido.getDescricao()).isEqualTo("Analgésico");
         assertThat(recebido.getQuantidade()).isEqualTo(20);
@@ -165,6 +172,7 @@ class MedicamentoServiceTest {
 
     @Test
     void deveAtualizarMedicamentoPreservandoId() {
+        when(categoriaRepository.existsById("cat1")).thenReturn(true);
         Medicamento existente = Medicamento.builder().id("1").nome("Nome antigo").build();
         when(repository.findById("1")).thenReturn(Optional.of(existente));
         when(repository.save(existente)).thenReturn(existente);
@@ -177,6 +185,7 @@ class MedicamentoServiceTest {
         assertThat(resultado.getQuantidade()).isEqualTo(20);
         assertThat(resultado.getValidade()).isEqualTo(LocalDate.of(2027, 8, 15));
         assertThat(resultado.getLote()).isEqualTo("L002");
+        assertThat(resultado.getCategoriaId()).isEqualTo("cat1");
         verify(repository).save(existente);
     }
 
@@ -202,5 +211,22 @@ class MedicamentoServiceTest {
         assertThatThrownBy(() -> service.excluir("999"))
                 .isInstanceOf(MedicamentoNotFoundException.class);
         verify(repository, never()).delete(any(Medicamento.class));
+    }
+
+    @Test
+    void naoDeveCadastrarComCategoriaInexistente() {
+        assertThatThrownBy(() -> service.criar(novoMedicamento()))
+                .isInstanceOf(CategoriaNotFoundException.class);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void naoDeveAtualizarComCategoriaInexistente() {
+        Medicamento medicamento = medicamentoSalvo();
+        when(repository.findById("1")).thenReturn(Optional.of(medicamento));
+        assertThatThrownBy(() -> service.atualizar("1", novoMedicamento()))
+                .isInstanceOf(CategoriaNotFoundException.class);
+        assertThat(medicamento.getNome()).isEqualTo("Dipirona");
+        verify(repository, never()).save(any());
     }
 }
