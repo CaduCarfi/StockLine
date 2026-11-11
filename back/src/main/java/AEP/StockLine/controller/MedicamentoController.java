@@ -37,6 +37,12 @@ public class MedicamentoController {
         return ResponseEntity.ok(service.listarTodos());
     }
 
+    @Operation(summary = "Busca medicamentos com estoque abaixo do mínimo")
+    @GetMapping("/estoque-baixo")
+    public ResponseEntity<List<MedicamentoResponseDTO>> buscarEstoqueBaixo() {
+        return ResponseEntity.ok(service.buscarComEstoqueBaixo());
+    }
+
     @Operation(summary = "Busca o medicamento pelo Id")
     @GetMapping("/{id}")
     public ResponseEntity<MedicamentoResponseDTO> buscarPorId(@PathVariable String id) {

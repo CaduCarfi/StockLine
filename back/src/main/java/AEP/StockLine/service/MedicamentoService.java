@@ -91,6 +91,13 @@ public class MedicamentoService {
         return historico;
     }
 
+    public List<MedicamentoResponseDTO> buscarComEstoqueBaixo() {
+        return repository.findMedicamentosComEstoqueBaixo()
+                .stream()
+                .map(mapper::toResponseDTO)
+                .toList();
+    }
+
     private void validarCategoria(String categoriaId) {
         if (!categoriaRepository.existsById(categoriaId)) {
             throw new CategoriaNotFoundException(categoriaId);
