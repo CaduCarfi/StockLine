@@ -253,4 +253,46 @@ class MedicamentoControllerTest {
                 .patch("/medicamentos/1/quantidade").contentType("application/json").content("{\"delta\":-100}"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void deveRetornar200ComMedicamentosDeEstoqueBaixo() throws Exception {
+        MedicamentoResponseDTO med = new MedicamentoResponseDTO(
+                "1", "Paracetamol", "Analgésico", 10,
+                LocalDate.of(2027, 3, 31), "L001", "cat1");
+        med.setEstoqueMinimo(50);
+        when(service.buscarComEstoqueBaixo()).thenReturn(List.of(med));
+
+        mockMvc.perform(get("/medicamentos/estoque-baixo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nome").value("Paracetamol"))
+                .andExpect(jsonPath("$[0].estoqueMinimo").value(50));
+    }
+
+    @Test
+    void deveRetornar200ComListaVaziaDeEstoqueBaixo() throws Exception {
+        when(service.buscarComEstoqueBaixo()).thenReturn(List.of());
+
+        mockMvc.perform(get("/medicamentos/estoque-baixo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void deveRetornarEstruturaCometaDaRespostaDeEstoqueBaixo() throws Exception {
+        MedicamentoResponseDTO med = new MedicamentoResponseDTO(
+                "2", "Dipirona", "Analgésico", 5,
+                LocalDate.of(2028, 8, 31), "L002", "cat1");
+        med.setEstoqueMinimo(30);
+        when(service.buscarComEstoqueBaixo()).thenReturn(List.of(med));
+
+        mockMvc.perform(get("/medicamentos/estoque-baixo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("2"))
+                .andExpect(jsonPath("$[0].nome").value("Dipirona"))
+                .andExpect(jsonPath("$[0].quantidade").value(5))
+                .andExpect(jsonPath("$[0].estoqueMinimo").value(30));
+    }
 }
