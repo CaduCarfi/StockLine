@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface MedicamentoRepository extends MongoRepository<Medicamento, String> {
 
+    boolean existsByCategoriaId(String categoriaId);
+
     @Query("{ 'lotes.validade': { $lt: ?0 } }")
     List<Medicamento> findByLotesValidadeBefore(LocalDate data);
 

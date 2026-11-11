@@ -4,6 +4,7 @@ import AEP.StockLine.dto.CategoriaRequestDTO;
 import AEP.StockLine.dto.CategoriaResponseDTO;
 import AEP.StockLine.model.Categoria;
 import AEP.StockLine.repository.CategoriaRepository;
+import AEP.StockLine.repository.MedicamentoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,13 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CategoriaServiceTest {
     @Mock
     private CategoriaRepository repository;
+    @Mock
+    private MedicamentoRepository medicamentoRepository;
     @InjectMocks
     private CategoriaService service;
 
     @Test
     void deveCadastrarCategoria() {
-        when(repository.save(any(Categoria.class))).thenReturn(new Categoria("cat1", "Analgésicos"));
-        CategoriaResponseDTO resposta = service.criar(new CategoriaRequestDTO(" Analgésicos "));
+        when(repository.save(any(Categoria.class))).thenReturn(new Categoria("cat1", "Analgésicos", null));
+        CategoriaResponseDTO resposta = service.criar(new CategoriaRequestDTO(" Analgésicos ", null));
         assertThat(resposta.getId()).isEqualTo("cat1");
         assertThat(resposta.getNome()).isEqualTo("Analgésicos");
         ArgumentCaptor<Categoria> captor = ArgumentCaptor.forClass(Categoria.class);
@@ -36,9 +39,11 @@ class CategoriaServiceTest {
 
     @Test
     void deveListarCategorias() {
-        when(repository.findAll()).thenReturn(List.of(new Categoria("cat1", "Analgésicos")));
+        when(repository.findAll()).thenReturn(List.of(new Categoria("cat1", "Analgésicos", null)));
         List<CategoriaResponseDTO> resultado = service.listarTodas();
-        assertThat(resultado).containsExactly(new CategoriaResponseDTO("cat1", "Analgésicos"));
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getId()).isEqualTo("cat1");
+        assertThat(resultado.get(0).getNome()).isEqualTo("Analgésicos");
     }
 
     @Test

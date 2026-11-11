@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class CategoriaResponseDTO {
     private String id;
     private String nome;
+    private String descricao;
 }
