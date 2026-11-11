@@ -1,6 +1,7 @@
 package AEP.StockLine.repository;
 
 import AEP.StockLine.model.Medicamento;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -16,4 +17,10 @@ public interface MedicamentoRepository extends MongoRepository<Medicamento, Stri
 
     @Query("{ 'lotes.validade': { $gte: ?0, $lte: ?1 } }")
     List<Medicamento> findByLotesValidadeBetween(LocalDate inicio, LocalDate fim);
+
+    @Aggregation(pipeline = {
+        "{ '$addFields': { 'estoqueTotal': { '$sum': '$lotes.saldo' } } }",
+        "{ '$match': { '$expr': { '$and': [ { '$ne': ['$estoqueMinimo', null] }, { '$lt': ['$estoqueTotal', '$estoqueMinimo'] } ] } } }"
+    })
+    List<Medicamento> findMedicamentosComEstoqueBaixo();
 }
