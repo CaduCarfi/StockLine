@@ -49,14 +49,15 @@ jobs:
         run: |
           docker exec medistock-mongo \
             mongosh \
-            "mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin" \
+            "mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin&authMechanism=SCRAM-SHA-256" \
             --eval "db.getSiblingDB('medistock_test').runCommand({ ping: 1 })"
 
       - name: Run tests and check coverage
         env:
-          MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin
-          MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin
+          MONGODB_URI: mongodb://admin:admin123@localhost:27017/medistock?authSource=admin&authMechanism=SCRAM-SHA-256
+          MONGODB_TEST_URI: mongodb://admin:admin123@localhost:27017/medistock_test?authSource=admin&authMechanism=SCRAM-SHA-256
           SPRING_PROFILES_ACTIVE: teste
+        working-directory: back
         run: mvn clean verify
 
       - name: Stop MongoDB
