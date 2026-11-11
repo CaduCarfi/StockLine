@@ -31,4 +31,7 @@ public class MedicamentoRequestDTO {
 
     @NotBlank(message = "A categoria é obrigatória")
     private String categoriaId;
+
+    @Min(value = 0, message = "O estoque mínimo não pode ser negativo")
+    private Integer estoqueMinimo;
 }
