@@ -1,4 +1,68 @@
 <div class="pagina">
-  <h1 class="pagina__titulo">Categorias</h1>
-  <p class="pagina__placeholder">Em construção...</p>
+  <div class="pagina__cabecalho">
+    <h1 class="pagina__titulo">Categorias</h1>
+    <button class="btn btn--primario" (click)="abrirNovo()" *ngIf="!mostrarForm">
+      + Nova categoria
+    </button>
+  </div>
+
+  <div class="form-panel" *ngIf="mostrarForm">
+    <h2 class="form-panel__titulo">{{ editandoId ? 'Editar categoria' : 'Nova categoria' }}</h2>
+    <div class="form-panel__campos">
+      <div class="campo">
+        <label class="campo__label">Nome *</label>
+        <input
+          class="campo__input"
+          type="text"
+          [(ngModel)]="form.nome"
+          placeholder="Nome da categoria"
+          maxlength="100"
+        />
+      </div>
+      <div class="campo">
+        <label class="campo__label">Descrição</label>
+        <input
+          class="campo__input"
+          type="text"
+          [(ngModel)]="form.descricao"
+          placeholder="Descrição (opcional)"
+          maxlength="255"
+        />
+      </div>
+    </div>
+    <div class="form-panel__acoes">
+      <button class="btn btn--primario" (click)="salvar()" [disabled]="salvando || !form.nome.trim()">
+        {{ salvando ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <button class="btn btn--secundario" (click)="cancelar()" [disabled]="salvando">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="tabela-container">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="carregando">
+          <td colspan="3" class="tabela__mensagem">Carregando...</td>
+        </tr>
+        <tr *ngIf="!carregando && categorias.length === 0">
+          <td colspan="3" class="tabela__mensagem">Nenhuma categoria cadastrada.</td>
+        </tr>
+        <tr *ngFor="let cat of categorias">
+          <td>{{ cat.nome }}</td>
+          <td class="tabela__descricao">{{ cat.descricao || '—' }}</td>
+          <td class="tabela__acoes">
+            <button class="btn-acao btn-acao--editar" (click)="abrirEditar(cat)">Editar</button>
+            <button class="btn-acao btn-acao--excluir" (click)="excluir(cat)">Excluir</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
