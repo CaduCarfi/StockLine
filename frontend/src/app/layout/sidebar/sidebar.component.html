@@ -1,0 +1,13 @@
+<aside class="sidebar">
+  <nav class="sidebar__nav">
+    <a
+      *ngFor="let item of itens"
+      class="sidebar__item"
+      [routerLink]="item.rota"
+      routerLinkActive="sidebar__item--ativo"
+    >
+      <span class="sidebar__icone">{{ item.icone }}</span>
+      <span class="sidebar__label">{{ item.label }}</span>
+    </a>
+  </nav>
+</aside>

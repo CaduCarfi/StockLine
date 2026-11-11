@@ -1,0 +1,12 @@
+.layout {
+  display: flex;
+  height: calc(100vh - var(--navbar-height));
+  margin-top: var(--navbar-height);
+}
+
+.conteudo {
+  flex: 1;
+  padding: 28px;
+  overflow-y: auto;
+  background-color: var(--color-bg);
+}
