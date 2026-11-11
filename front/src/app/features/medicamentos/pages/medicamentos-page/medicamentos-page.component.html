@@ -1,10 +1,64 @@
 <div class="pagina">
   <div class="pagina__cabecalho">
     <h1 class="pagina__titulo">Medicamentos</h1>
-    <button class="btn btn--primario">+ Novo medicamento</button>
+    <button class="btn btn--primario" (click)="abrirNovo()" *ngIf="!mostrarForm">+ Novo medicamento</button>
   </div>
 
-  <div class="pagina__filtro">
+  <!-- Formulário de cadastro / edição -->
+  <div class="form-panel" *ngIf="mostrarForm">
+    <h2 class="form-panel__titulo">{{ editandoId ? 'Editar medicamento' : 'Novo medicamento' }}</h2>
+
+    <div class="form-grupo">
+      <label>Nome *</label>
+      <input type="text" [(ngModel)]="form.nome" placeholder="Nome do medicamento" />
+    </div>
+
+    <div class="form-grupo">
+      <label>Descrição</label>
+      <input type="text" [(ngModel)]="form.descricao" placeholder="Descrição (opcional)" />
+    </div>
+
+    <div class="form-linha">
+      <div class="form-grupo">
+        <label>Quantidade *</label>
+        <input type="number" [(ngModel)]="form.quantidade" min="0" placeholder="0" />
+      </div>
+
+      <div class="form-grupo">
+        <label>Estoque mínimo</label>
+        <input type="number" [(ngModel)]="form.estoqueMinimo" min="0" placeholder="—" />
+      </div>
+    </div>
+
+    <div class="form-linha">
+      <div class="form-grupo">
+        <label>Lote *</label>
+        <input type="text" [(ngModel)]="form.lote" placeholder="Código do lote" />
+      </div>
+
+      <div class="form-grupo">
+        <label>Validade *</label>
+        <input type="date" [(ngModel)]="form.validade" />
+      </div>
+    </div>
+
+    <div class="form-grupo">
+      <label>Categoria *</label>
+      <select [(ngModel)]="form.categoriaId">
+        <option value="">Selecione uma categoria</option>
+        <option *ngFor="let cat of categoriasList" [value]="cat.id">{{ cat.nome }}</option>
+      </select>
+    </div>
+
+    <div class="form-acoes">
+      <button class="btn btn--primario" (click)="salvar()" [disabled]="salvando || !formValido">
+        {{ salvando ? 'Salvando...' : (editandoId ? 'Salvar alterações' : 'Cadastrar') }}
+      </button>
+      <button class="btn btn--secundario" (click)="cancelar()" [disabled]="salvando">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="pagina__filtro" *ngIf="!mostrarForm">
     <input
       type="text"
       class="input-busca"
@@ -13,7 +67,7 @@
     />
   </div>
 
-  <div class="tabela-container">
+  <div class="tabela-container" *ngIf="!mostrarForm">
     <table class="tabela">
       <thead>
         <tr>
@@ -60,9 +114,7 @@
             >próximo</span>
           </td>
           <td class="tabela__acoes">
-            <button class="btn-acao btn-acao--detalhes" (click)="verDetalhes(med)">Detalhes</button>
-            <button class="btn-acao btn-acao--editar" (click)="editar(med)">Editar</button>
-            <button class="btn-acao btn-acao--ajustar" (click)="ajustar(med)">Ajustar</button>
+            <button class="btn-acao btn-acao--editar" (click)="abrirEditar(med)">Editar</button>
             <button class="btn-acao btn-acao--excluir" (click)="excluir(med)">Excluir</button>
           </td>
         </tr>
@@ -70,7 +122,7 @@
     </table>
   </div>
 
-  <div class="legenda" *ngIf="!carregando && medicamentos.length > 0">
+  <div class="legenda" *ngIf="!mostrarForm && !carregando && medicamentos.length > 0">
     <span class="legenda__item">
       <span class="legenda__cor legenda__cor--vencido"></span> Vencido
     </span>
