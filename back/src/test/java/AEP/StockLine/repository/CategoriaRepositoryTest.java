@@ -28,7 +28,7 @@ class CategoriaRepositoryTest {
         String medicamentoId = null;
         try {
             MedicamentoRequestDTO dados = new MedicamentoRequestDTO("Dipirona", "Analgésico", 20,
-                    LocalDate.of(2027, 8, 15), "L001", categoriaId);
+                    LocalDate.of(2027, 8, 15), "L001", categoriaId, null);
             medicamentoId = medicamentoService.criar(dados).getId();
 
             assertThat(categorias.findById(categoriaId)).get()
