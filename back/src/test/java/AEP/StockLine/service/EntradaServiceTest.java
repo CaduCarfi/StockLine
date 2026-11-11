@@ -151,7 +151,7 @@ class EntradaServiceTest {
         MedicamentoService cadastro = new MedicamentoService(repository, categorias, new AEP.StockLine.mapper.MedicamentoMapper());
         assertThatThrownBy(() -> cadastro.excluir("m1")).isInstanceOf(EstoqueException.class);
         when(categorias.existsById("cat1")).thenReturn(true);
-        var dados = new MedicamentoRequestDTO("Dipirona", null, 0, validade, "L1", "cat1");
+        var dados = new MedicamentoRequestDTO("Dipirona", null, 0, validade, "L1", "cat1", null);
         assertThatThrownBy(() -> cadastro.atualizar("m1", dados)).isInstanceOf(EstoqueException.class);
         assertThat(medicamento.getQuantidade()).isEqualTo(10);
         verify(repository, never()).delete(any(Medicamento.class));
