@@ -1,168 +1,159 @@
-# StockLine – Frontend
+# StockLine — Frontend
 
-Interface web do **StockLine**, sistema de controle de estoque de medicamentos para postos de saúde e ONGs (alinhado ao **ODS 3 – Saúde e Bem-Estar**). O frontend consome a API REST do backend (Java + Spring Boot + MongoDB) e permite cadastrar, consultar e movimentar o estoque de medicamentos.
+Interface web para gerenciamento de medicamentos e controle de estoque.
 
-> Projeto acadêmico (AEP – Engenharia de Software, UniCesumar).
-
----
-
-## Funcionalidades
-
-- Listagem de medicamentos com destaque para **estoque baixo** e **validade vencida/próxima**
-- Cadastro, edição e exclusão de medicamentos
-- Ajuste rápido de quantidade (de -10 a +10)
-- Página de detalhes com lotes e estoque total
-- Gerenciamento de categorias
-- Entrada e baixa de estoque por lote
-- Histórico de movimentações
-- Painel de alertas (estoque baixo, lotes vencidos e a vencer)
-- Indicador de status da API (`/actuator/health`)
-
-> O acompanhamento de cada item está nas issues do GitHub, com a label `frontend`.
-
----
-
-## Tecnologias
-
-| Item | Detalhe |
-|------|---------|
-| Framework | [Angular](https://angular.dev) 21 (Angular CLI 21.2.29) |
-| Linguagem | TypeScript |
-| Testes unitários | [Vitest](https://vitest.dev/) |
-| Backend consumido | API REST Spring Boot (`http://localhost:8080`) |
+**Stack:** Angular 21 · TypeScript 5.9 · Node.js 18+ · npm 10
 
 ---
 
 ## Pré-requisitos
 
-- [Node.js](https://nodejs.org/) em versão LTS compatível com o Angular 21
-- npm (já vem com o Node.js)
-- Angular CLI (opcional, o projeto também roda com `npx`):
+| Ferramenta | Versão mínima | Verificar |
+|---|---|---|
+| Node.js | 18 | `node --version` |
+| npm | 10 | `npm --version` |
 
-```bash
-npm install -g @angular/cli
-```
-
-- **Backend do StockLine em execução** em `http://localhost:8080`, com o MongoDB ativo (veja o README do backend e o `docker-compose.yml`)
+> O Angular CLI **não precisa ser instalado globalmente** — ele está nas dependências do projeto e os scripts do `package.json` já o utilizam internamente.
 
 ---
 
-## Como executar
+## Configuração do backend
 
-```bash
-# 1. Entre na pasta do frontend
-cd frontend
+O frontend consome a API REST em **`http://localhost:8080`** (configurado em `src/app/core/services/api.service.ts`).
 
-# 2. Instale as dependências
-npm install
+**O backend deve estar rodando antes de usar a aplicação.** Consulte `back/README.md` para saber como subir a API e o MongoDB.
 
-# 3. Suba o servidor de desenvolvimento
-ng serve
+> Se o backend rodar em outra porta, altere a constante `baseUrl` em `front/src/app/core/services/api.service.ts`.
+
+---
+
+## Variáveis de ambiente
+
+O projeto **não utiliza arquivo `.env`**. A URL do backend está definida diretamente no código-fonte:
+
+```typescript
+// front/src/app/core/services/api.service.ts
+private readonly baseUrl = 'http://localhost:8080';
 ```
 
-Acesse **http://localhost:4200/**. A aplicação recarrega automaticamente a cada alteração nos arquivos.
+---
+
+## Instalar dependências
+
+Execute a partir da pasta `front/`:
+
+```bash
+cd front
+npm install
+```
+
+---
+
+## Executar a aplicação
+
+```bash
+cd front
+npm start
+```
+
+A aplicação sobe em **http://localhost:4200**. O terminal exibe:
+
+```
+Application bundle generation complete.
+```
+
+Para parar: `Ctrl + C`.
 
 ### Ordem para subir o sistema completo
 
-1. `docker compose up -d` (MongoDB)
-2. Backend Spring Boot (porta `8080`)
-3. Frontend Angular (porta `4200`)
+```bash
+# 1. A partir da raiz do repositório — sobe o MongoDB
+docker compose up -d mongodb
+
+# 2. A partir da pasta back/ — sobe a API
+cd back && ./mvnw spring-boot:run
+
+# 3. A partir da pasta front/ — sobe o frontend
+cd front && npm start
+```
 
 ---
 
-## Integração com a API
-
-O frontend roda na porta `4200` e a API na `8080`, ou seja, são origens diferentes. Para as chamadas funcionarem em desenvolvimento, use **uma** das opções:
-
-**Opção 1 – CORS no backend**: liberar `http://localhost:4200` na configuração do Spring.
-
-**Opção 2 – Proxy do Angular** (`proxy.conf.json` na raiz do frontend):
-
-```json
-{
-  "/medicamentos": { "target": "http://localhost:8080", "secure": false },
-  "/actuator": { "target": "http://localhost:8080", "secure": false }
-}
-```
+## Executar os testes
 
 ```bash
-ng serve --proxy-config proxy.conf.json
+cd front
+npm test
 ```
 
-### Endpoints utilizados
-
-| Método | Endpoint | Uso |
-|--------|----------|-----|
-| GET | `/medicamentos` | Listagem |
-| GET | `/medicamentos/{id}` | Detalhes |
-| POST | `/medicamentos` | Cadastro |
-| PUT | `/medicamentos/{id}` | Edição |
-| DELETE | `/medicamentos/{id}` | Exclusão |
-| PATCH | `/medicamentos/{id}/quantidade` | Ajuste de quantidade (`delta` de -10 a 10) |
-| GET | `/medicamentos/estoque-baixo` | Alerta de estoque baixo |
-| GET | `/medicamentos/{id}/historico` | Histórico de movimentações |
-| GET | `/actuator/health` | Status da API |
-
-> Os endpoints de categorias, entrada/baixa por lote e lotes vencidos ainda estão em definição no backend. Atualize esta tabela quando forem publicados. A documentação completa da API fica no Swagger do backend (`/swagger-ui.html`).
-
-### Tratamento de erros
-
-A API devolve erros no formato `ErroResponseDTO`. O frontend deve exibir a **mensagem** retornada ao usuário. Casos principais:
-
-| Status | Situação |
-|--------|----------|
-| 400 | Quantidade inválida (ficaria negativa) ou dados inválidos |
-| 404 | Medicamento não encontrado |
-
-Atenção: a API **recusa** excluir, editar estoque ou ajustar quantidade de medicamentos que já possuem movimentações. A interface deve mostrar essa mensagem em vez de falhar em silêncio.
+Os testes rodam com **Vitest** em ambiente jsdom (sem abrir o navegador). O resultado aparece diretamente no terminal.
 
 ---
 
-## Estrutura do projeto
-frontend/
-- src/
-  - app/
-    - core/ (serviços de API, interceptors, modelos)
-    - shared/ (componentes reutilizáveis: avisos, loading)
-    - pages/ (telas: medicamentos, categorias, alertas, histórico)
-    - app.routes.ts (rotas)
-    - app.ts (componente raiz)
-  - index.html
-  - styles.css
-- angular.json
-- package.json
-- README.md
-
-
----
-
-## Comandos úteis
-
-| Comando | O que faz |
-|---------|-----------|
-| `ng serve` | Servidor de desenvolvimento em `localhost:4200` |
-| `ng build` | Build de produção na pasta `dist/` |
-| `ng test` | Testes unitários com Vitest |
-| `ng generate component pages/nome` | Cria um novo componente |
-| `ng generate service core/nome` | Cria um novo serviço |
-| `ng generate --help` | Lista todos os geradores |
-
----
-
-## Testes
+## Build de produção
 
 ```bash
-ng test
+cd front
+npm run build
 ```
 
-Os testes do frontend rodam com Vitest. A cobertura exigida de 70% (JaCoCo) se aplica apenas ao backend em Java.
-
-Para testes de ponta a ponta (e2e), o Angular CLI não traz uma ferramenta por padrão. O grupo pode escolher uma (por exemplo Playwright) e executar com `ng e2e`.
+Os arquivos gerados ficam em `front/dist/`.
 
 ---
 
-## Referências
+## Páginas da aplicação
 
-- [Documentação do Angular](https://angular.dev)
-- [Angular CLI – Referência de comandos](https://angular.dev/tools/cli)
-- [Vitest](https://vitest.dev/)
+| Rota | Descrição |
+|---|---|
+| `/medicamentos` | Listagem e gerenciamento de medicamentos |
+| `/categorias` | Listagem e gerenciamento de categorias |
+| `/alertas` | Lotes vencidos e próximos do vencimento |
+| `/historico` | Histórico de movimentações de estoque |
+
+---
+
+## Estrutura de diretórios
+
+```
+front/
+├── package.json                  ← dependências e scripts npm
+├── tsconfig.json                 ← configuração TypeScript
+├── angular.json                  ← configuração do Angular CLI
+└── src/
+    ├── main.ts                   ← bootstrap da aplicação
+    ├── styles.scss               ← estilos globais
+    └── app/
+        ├── app.ts                ← componente raiz
+        ├── app.html              ← template raiz (layout + router-outlet)
+        ├── app-module.ts         ← módulo raiz
+        ├── app-routing-module.ts ← rotas principais (lazy load)
+        ├── app.spec.ts           ← testes do componente raiz
+        ├── core/
+        │   ├── models/           ← interfaces e tipos de dados
+        │   └── services/
+        │       └── api.service.ts ← cliente HTTP (baseUrl: localhost:8080)
+        ├── features/
+        │   ├── medicamentos/     ← módulo lazy de medicamentos
+        │   ├── categorias/       ← módulo lazy de categorias
+        │   ├── alertas/          ← módulo lazy de alertas
+        │   └── historico/        ← módulo lazy de histórico
+        ├── layout/
+        │   ├── navbar/           ← barra superior
+        │   └── sidebar/          ← menu lateral
+        └── shared/
+            ├── components/
+            │   └── alert/        ← componente de notificações
+            └── services/
+                └── alerta.service.ts ← serviço de notificações
+```
+
+---
+
+## Problemas comuns
+
+| Problema | Causa provável | Solução |
+|---|---|---|
+| `ECONNREFUSED http://localhost:8080` | Backend não está rodando | Suba a API: `cd back && ./mvnw spring-boot:run` |
+| `Port 4200 is already in use` | Porta ocupada | Use `npm start -- --port 4201` |
+| `Cannot find module '...'` | Dependências não instaladas | Execute `npm install` na pasta `front/` |
+| `node: command not found` | Node.js não instalado | Instale o Node.js 18+ em nodejs.org |
