@@ -22,6 +22,8 @@ public class MedicamentoResponseDTO {
 
     private String categoriaId;
 
+    private Integer estoqueMinimo;
+
     private List<Lote> lotes;
 
     public MedicamentoResponseDTO(String id, String nome, String descricao, Integer quantidade,

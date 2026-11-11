@@ -15,6 +15,7 @@ public class MedicamentoMapper {
                 .validade(dto.getValidade())
                 .lote(dto.getLote())
                 .categoriaId(dto.getCategoriaId())
+                .estoqueMinimo(dto.getEstoqueMinimo())
                 .build();
     }
 
@@ -28,6 +29,7 @@ public class MedicamentoMapper {
                 medicamento.getLote(),
                 medicamento.getCategoriaId()
         );
+        resposta.setEstoqueMinimo(medicamento.getEstoqueMinimo());
         resposta.setLotes(medicamento.getLotes());
         return resposta;
     }
@@ -38,5 +40,6 @@ public class MedicamentoMapper {
         medicamento.setValidade(dto.getValidade());
         medicamento.setLote(dto.getLote());
         medicamento.setCategoriaId(dto.getCategoriaId());
+        medicamento.setEstoqueMinimo(dto.getEstoqueMinimo());
     }
 }

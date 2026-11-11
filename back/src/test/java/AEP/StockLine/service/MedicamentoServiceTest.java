@@ -146,7 +146,7 @@ class MedicamentoServiceTest {
 
     private MedicamentoRequestDTO novoMedicamento() {
         return new MedicamentoRequestDTO("Dipirona", "Analgésico", 20,
-                LocalDate.of(2027, 8, 15), "L002", "cat1");
+                LocalDate.of(2027, 8, 15), "L002", "cat1", null);
     }
 
     @Test
@@ -319,5 +319,58 @@ class MedicamentoServiceTest {
                 .isInstanceOf(AEP.StockLine.exception.EstoqueException.class);
         assertThatThrownBy(() -> service.ajustarQuantidade("999", 5))
                 .isInstanceOf(MedicamentoNotFoundException.class);
+    }
+
+    @Test
+    void deveRetornarMedicamentosComEstoqueBaixo() {
+        Medicamento med = Medicamento.builder()
+                .id("1").nome("Paracetamol").estoqueMinimo(50).build();
+        when(repository.findMedicamentosComEstoqueBaixo()).thenReturn(List.of(med));
+
+        List<MedicamentoResponseDTO> resultado = service.buscarComEstoqueBaixo();
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getNome()).isEqualTo("Paracetamol");
+        assertThat(resultado.get(0).getEstoqueMinimo()).isEqualTo(50);
+        verify(repository).findMedicamentosComEstoqueBaixo();
+    }
+
+    @Test
+    void deveRetornarListaVaziaQuandoNenhumMedicamentoEstiverAbaixoDoMinimo() {
+        when(repository.findMedicamentosComEstoqueBaixo()).thenReturn(List.of());
+
+        List<MedicamentoResponseDTO> resultado = service.buscarComEstoqueBaixo();
+
+        assertThat(resultado).isEmpty();
+        verify(repository).findMedicamentosComEstoqueBaixo();
+    }
+
+    @Test
+    void naoDeveRetornarMedicamentosComEstoqueSuficiente() {
+        Medicamento baixo = Medicamento.builder()
+                .id("1").nome("Paracetamol").estoqueMinimo(100).build();
+        when(repository.findMedicamentosComEstoqueBaixo()).thenReturn(List.of(baixo));
+
+        List<MedicamentoResponseDTO> resultado = service.buscarComEstoqueBaixo();
+
+        assertThat(resultado).extracting(MedicamentoResponseDTO::getNome)
+                .containsExactly("Paracetamol");
+        assertThat(resultado).extracting(MedicamentoResponseDTO::getNome)
+                .doesNotContain("Dipirona");
+    }
+
+    @Test
+    void deveConsiderarSomaDeTodosOsLotesNaResposta() {
+        AEP.StockLine.model.Lote lote1 = new AEP.StockLine.model.Lote("L1", LocalDate.now().plusDays(10), 20);
+        AEP.StockLine.model.Lote lote2 = new AEP.StockLine.model.Lote("L2", LocalDate.now().plusDays(20), 15);
+        Medicamento med = Medicamento.builder()
+                .id("1").nome("Dipirona").estoqueMinimo(50)
+                .lotes(List.of(lote1, lote2)).build();
+        when(repository.findMedicamentosComEstoqueBaixo()).thenReturn(List.of(med));
+
+        List<MedicamentoResponseDTO> resultado = service.buscarComEstoqueBaixo();
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getLotes()).hasSize(2);
     }
 }

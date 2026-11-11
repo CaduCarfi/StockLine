@@ -1,5 +1,6 @@
 package AEP.StockLine.repository;
 
+import AEP.StockLine.model.Lote;
 import AEP.StockLine.model.Medicamento;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -136,5 +138,88 @@ class MedicamentoRepositoryTest {
         boolean existe = repository.existsById(salvo.getId());
 
         assertThat(existe).isTrue();
+    }
+
+    // ======= findMedicamentosComEstoqueBaixo =======
+
+    @Test
+    void deveRetornarMedicamentoComEstoqueTotalAbaixoDoMinimo() {
+        repository.save(Medicamento.builder()
+                .nome("Paracetamol")
+                .estoqueMinimo(50)
+                .lotes(List.of(new Lote("L1", LocalDate.now().plusDays(10), 30)))
+                .build());
+
+        List<Medicamento> resultado = repository.findMedicamentosComEstoqueBaixo();
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getNome()).isEqualTo("Paracetamol");
+    }
+
+    @Test
+    void naoDeveRetornarMedicamentoComEstoqueTotalAcimaDoMinimo() {
+        repository.save(Medicamento.builder()
+                .nome("Dipirona")
+                .estoqueMinimo(20)
+                .lotes(List.of(new Lote("L1", LocalDate.now().plusDays(10), 100)))
+                .build());
+
+        List<Medicamento> resultado = repository.findMedicamentosComEstoqueBaixo();
+
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    void naoDeveRetornarMedicamentoComEstoqueTotalIgualAoMinimo() {
+        repository.save(Medicamento.builder()
+                .nome("Amoxicilina")
+                .estoqueMinimo(40)
+                .lotes(List.of(new Lote("L1", LocalDate.now().plusDays(10), 40)))
+                .build());
+
+        List<Medicamento> resultado = repository.findMedicamentosComEstoqueBaixo();
+
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    void deveConsiderarSomaDeTodosOsLotesNaComparacao() {
+        repository.save(Medicamento.builder()
+                .nome("Complexo B")
+                .estoqueMinimo(100)
+                .lotes(List.of(
+                        new Lote("L1", LocalDate.now().plusDays(10), 40),
+                        new Lote("L2", LocalDate.now().plusDays(20), 40)))
+                .build());
+
+        List<Medicamento> resultado = repository.findMedicamentosComEstoqueBaixo();
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getLotes()).hasSize(2);
+    }
+
+    @Test
+    void deveRetornarMedicamentoSemLotesComoEstoqueBaixo() {
+        repository.save(Medicamento.builder()
+                .nome("Vitamina D")
+                .estoqueMinimo(10)
+                .build());
+
+        List<Medicamento> resultado = repository.findMedicamentosComEstoqueBaixo();
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getNome()).isEqualTo("Vitamina D");
+    }
+
+    @Test
+    void naoDeveRetornarMedicamentoSemEstoqueMinimo() {
+        repository.save(Medicamento.builder()
+                .nome("Ibuprofeno")
+                .lotes(List.of(new Lote("L1", LocalDate.now().plusDays(10), 5)))
+                .build());
+
+        List<Medicamento> resultado = repository.findMedicamentosComEstoqueBaixo();
+
+        assertThat(resultado).isEmpty();
     }
 }
