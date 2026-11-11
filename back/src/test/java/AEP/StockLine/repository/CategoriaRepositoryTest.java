@@ -24,7 +24,7 @@ class CategoriaRepositoryTest {
 
     @Test
     void deveSalvarCategoriaEVinculoDoMedicamento() {
-        String categoriaId = categoriaService.criar(new CategoriaRequestDTO("Analgésicos")).getId();
+        String categoriaId = categoriaService.criar(new CategoriaRequestDTO("Analgésicos", null)).getId();
         String medicamentoId = null;
         try {
             MedicamentoRequestDTO dados = new MedicamentoRequestDTO("Dipirona", "Analgésico", 20,

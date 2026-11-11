@@ -23,18 +23,18 @@ class CategoriaControllerTest {
 
     @Test
     void deveCadastrarComStatus201() throws Exception {
-        when(service.criar(any())).thenReturn(new CategoriaResponseDTO("cat1", "Analgésicos"));
+        when(service.criar(any())).thenReturn(new CategoriaResponseDTO("cat1", "Analgésicos", null));
         mockMvc.perform(post("/categorias").contentType("application/json")
                 .content("{\"nome\":\"Analgésicos\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("cat1"))
                 .andExpect(jsonPath("$.nome").value("Analgésicos"));
-        verify(service).criar(new CategoriaRequestDTO("Analgésicos"));
+        verify(service).criar(new CategoriaRequestDTO("Analgésicos", null));
     }
 
     @Test
     void deveListarCategorias() throws Exception {
-        when(service.listarTodas()).thenReturn(List.of(new CategoriaResponseDTO("cat1", "Analgésicos")));
+        when(service.listarTodas()).thenReturn(List.of(new CategoriaResponseDTO("cat1", "Analgésicos", null)));
         mockMvc.perform(get("/categorias")).andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("cat1"))
                 .andExpect(jsonPath("$[0].nome").value("Analgésicos"));
