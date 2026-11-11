@@ -29,6 +29,8 @@ public class Medicamento {
 
     private String categoriaId;
 
+    private Integer estoqueMinimo;
+
     @Builder.Default
     private List<Lote> lotes = new ArrayList<>();
 
