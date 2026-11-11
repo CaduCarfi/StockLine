@@ -14,4 +14,5 @@ public class Categoria {
     @Id
     private String id;
     private String nome;
+    private String descricao;
 }
