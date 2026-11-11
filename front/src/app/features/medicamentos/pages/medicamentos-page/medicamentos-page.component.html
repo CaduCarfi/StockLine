@@ -1,4 +1,84 @@
 <div class="pagina">
-  <h1 class="pagina__titulo">Medicamentos</h1>
-  <p class="pagina__placeholder">Em construção...</p>
+  <div class="pagina__cabecalho">
+    <h1 class="pagina__titulo">Medicamentos</h1>
+    <button class="btn btn--primario">+ Novo medicamento</button>
+  </div>
+
+  <div class="pagina__filtro">
+    <input
+      type="text"
+      class="input-busca"
+      placeholder="Buscar por nome..."
+      [(ngModel)]="busca"
+    />
+  </div>
+
+  <div class="tabela-container">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Lote</th>
+          <th>Quantidade</th>
+          <th>Est. Mínimo</th>
+          <th>Validade</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="carregando">
+          <td colspan="7" class="tabela__mensagem">Carregando...</td>
+        </tr>
+
+        <tr *ngIf="!carregando && medicamentosFiltrados.length === 0">
+          <td colspan="7" class="tabela__mensagem">Nenhum medicamento cadastrado.</td>
+        </tr>
+
+        <tr
+          *ngFor="let med of medicamentosFiltrados"
+          [ngClass]="classeLinha(med)"
+        >
+          <td>{{ med.nome }}</td>
+          <td>{{ categorias.get(med.categoriaId) || '—' }}</td>
+          <td>{{ med.lote }}</td>
+          <td>
+            {{ med.quantidade }}
+            <span
+              *ngIf="estoqueAbaixoMinimo(med)"
+              class="badge badge--aviso"
+              title="Estoque abaixo do mínimo"
+            >baixo</span>
+          </td>
+          <td>{{ med.estoqueMinimo ?? '—' }}</td>
+          <td>
+            {{ med.validade | date:'dd/MM/yyyy' }}
+            <span *ngIf="estaVencido(med.validade)" class="badge badge--erro">vencido</span>
+            <span
+              *ngIf="!estaVencido(med.validade) && estaProximoVencimento(med.validade)"
+              class="badge badge--aviso"
+            >próximo</span>
+          </td>
+          <td class="tabela__acoes">
+            <button class="btn-acao btn-acao--detalhes" (click)="verDetalhes(med)">Detalhes</button>
+            <button class="btn-acao btn-acao--editar" (click)="editar(med)">Editar</button>
+            <button class="btn-acao btn-acao--ajustar" (click)="ajustar(med)">Ajustar</button>
+            <button class="btn-acao btn-acao--excluir" (click)="excluir(med)">Excluir</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="legenda" *ngIf="!carregando && medicamentos.length > 0">
+    <span class="legenda__item">
+      <span class="legenda__cor legenda__cor--vencido"></span> Vencido
+    </span>
+    <span class="legenda__item">
+      <span class="legenda__cor legenda__cor--proximo"></span> Vencimento próximo (30 dias)
+    </span>
+    <span class="legenda__item">
+      <span class="legenda__cor legenda__cor--baixo"></span> Estoque baixo
+    </span>
+  </div>
 </div>
