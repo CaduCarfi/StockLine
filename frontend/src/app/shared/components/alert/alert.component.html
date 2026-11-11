@@ -1,0 +1,4 @@
+<div *ngIf="alerta" class="alert" [ngClass]="'alert--' + alerta.tipo">
+  <span class="alert__mensagem">{{ alerta.mensagem }}</span>
+  <button class="alert__fechar" (click)="fechar()" aria-label="Fechar">&#10005;</button>
+</div>
