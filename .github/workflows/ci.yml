@@ -10,8 +10,8 @@ on:
       - master
 
 jobs:
-  test:
-    name: Tests and Coverage
+  backend:
+    name: Backend - Tests and Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -60,6 +60,45 @@ jobs:
         working-directory: back
         run: mvn clean verify
 
+      - name: Upload backend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: back/target/site/jacoco
+          if-no-files-found: ignore
+
       - name: Stop MongoDB
         if: always()
         run: docker compose down -v
+
+  frontend:
+    name: Frontend - Tests and Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install dependencies
+        working-directory: front
+        run: npm ci
+
+      - name: Run tests with coverage (threshold 70%)
+        working-directory: front
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: front/coverage
+          if-no-files-found: ignore
