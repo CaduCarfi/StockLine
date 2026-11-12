@@ -14,9 +14,10 @@ interface ItemMenu {
 })
 export class SidebarComponent {
   itens: ItemMenu[] = [
-    { label: 'Medicamentos', rota: '/medicamentos', icone: 'M' },
-    { label: 'Categorias',   rota: '/categorias',   icone: 'C' },
-    { label: 'Alertas',      rota: '/alertas',      icone: 'A' },
-    { label: 'Histórico',    rota: '/historico',    icone: 'H' }
+    { label: 'Medicamentos',  rota: '/medicamentos',  icone: 'M' },
+    { label: 'Categorias',    rota: '/categorias',    icone: 'C' },
+    { label: 'Movimentações', rota: '/movimentacoes', icone: 'V' },
+    { label: 'Alertas',       rota: '/alertas',       icone: 'A' },
+    { label: 'Histórico',     rota: '/historico',     icone: 'H' }
   ];
 }

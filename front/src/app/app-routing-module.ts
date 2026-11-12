@@ -22,6 +22,11 @@ const routes: Routes = [
     path: 'historico',
     loadChildren: () =>
       import('./features/historico/historico.module').then(m => m.HistoricoModule)
+  },
+  {
+    path: 'movimentacoes',
+    loadChildren: () =>
+      import('./features/movimentacoes/movimentacoes.module').then(m => m.MovimentacoesModule)
   }
 ];
 
