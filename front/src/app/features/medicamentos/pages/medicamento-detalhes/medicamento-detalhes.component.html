@@ -23,9 +23,40 @@
     <div class="acoes">
       <button type="button" [disabled]="salvando" (click)="abrir('entrada')">Registrar entrada</button>
       <button type="button" [disabled]="salvando" (click)="abrir('baixa')">Registrar baixa</button>
+      <button type="button" [disabled]="salvando" (click)="abrir('ajuste')">Ajustar estoque</button>
       <button type="button" [disabled]="salvando" (click)="abrir('historico')">Ver histórico</button>
     </div>
   </section>
+
+  @if (secao === 'ajuste') {
+    <section class="painel">
+      <h2>Ajustar estoque</h2>
+      <div class="ajuste-stepper">
+        <div class="ajuste-linha">
+          <span class="ajuste-label">Estoque atual</span>
+          <span class="ajuste-valor">{{ med.quantidade }}</span>
+        </div>
+        <div class="ajuste-linha">
+          <span class="ajuste-label">Ajuste</span>
+          <div class="stepper">
+            <button type="button" class="stepper__btn" (click)="decrementarDelta()" [disabled]="salvando || (delta ?? 0) <= -10">−</button>
+            <span class="stepper__valor" [class.stepper__valor--positivo]="(delta ?? 0) > 0" [class.stepper__valor--negativo]="(delta ?? 0) < 0">
+              {{ (delta ?? 0) > 0 ? '+' : '' }}{{ delta ?? 0 }}
+            </span>
+            <button type="button" class="stepper__btn" (click)="incrementarDelta()" [disabled]="salvando || (delta ?? 0) >= 10">+</button>
+          </div>
+        </div>
+        <div class="ajuste-linha">
+          <span class="ajuste-label">Resultado</span>
+          <span class="ajuste-valor" [class.ajuste-valor--destaque]="(delta ?? 0) !== 0">{{ med.quantidade + (delta ?? 0) }}</span>
+        </div>
+      </div>
+      <div class="acoes">
+        <button type="button" [disabled]="salvando || !ajusteValido" (click)="ajustar()">{{ salvando ? 'Ajustando...' : 'Confirmar ajuste' }}</button>
+        <button type="button" [disabled]="salvando" (click)="secao = null">Cancelar</button>
+      </div>
+    </section>
+  }
 
   @if (secao === 'entrada' || secao === 'baixa') {
     <section class="painel">
