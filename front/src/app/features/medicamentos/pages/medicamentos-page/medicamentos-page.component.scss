@@ -17,6 +17,13 @@
   }
 }
 
+.link-detalhes {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .input-busca {
   width: 300px;
   padding: 8px 12px;

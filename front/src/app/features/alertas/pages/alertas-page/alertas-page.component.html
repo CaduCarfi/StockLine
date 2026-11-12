@@ -1,4 +1,56 @@
-<div class="pagina">
-  <h1 class="pagina__titulo">Alertas</h1>
-  <p class="pagina__placeholder">Em construção...</p>
+<h1 class="titulo">Alertas de estoque e validade</h1>
+<div class="abas" role="group" aria-label="Tipos de alerta">
+  <button type="button" [attr.aria-pressed]="aba === 'estoque'" (click)="aba = 'estoque'">Estoque baixo ({{ estoque.carregando || estoque.erro ? '—' : estoque.itens.length }})</button>
+  <button type="button" [attr.aria-pressed]="aba === 'vencidos'" (click)="aba = 'vencidos'">Lotes vencidos ({{ vencidos.carregando || vencidos.erro ? '—' : vencidos.itens.length }})</button>
+  <button type="button" [attr.aria-pressed]="aba === 'a-vencer'" (click)="aba = 'a-vencer'">A vencer ({{ aVencer.carregando || aVencer.erro ? '—' : aVencer.itens.length }})</button>
 </div>
+<section class="painel" aria-label="Resultado dos alertas">
+  @if (aba === 'estoque') {
+    @if (estoque.carregando) {
+      <p class="mensagem" role="status">Consultando estoque...</p>
+    } @else if (estoque.erro) {
+      <p class="mensagem" role="alert">{{ estoque.erro }}</p>
+    } @else if (!estoque.itens.length) {
+      <p class="mensagem">Nenhum medicamento abaixo do estoque mínimo.</p>
+    } @else {
+      <div class="tabela-container">
+        <table>
+          <thead><tr><th scope="col">Medicamento</th><th scope="col">Estoque atual</th><th scope="col">Estoque mínimo</th></tr></thead>
+          <tbody>
+            @for (med of estoque.itens; track med.id) {
+              <tr><td><a [routerLink]="['/medicamentos', med.id]">{{ med.nome }}</a></td><td>{{ med.quantidade }}</td><td>{{ med.estoqueMinimo ?? '—' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else {
+    @if (aba === 'a-vencer') {
+      <form class="filtros" (ngSubmit)="aplicarPeriodo()">
+        <label>Dias até o vencimento
+          <input type="number" name="dias" [(ngModel)]="dias" min="1" max="2147483647" step="1" required />
+        </label>
+        <button type="submit" [disabled]="!diasValidos || aVencer.carregando">Aplicar</button>
+      </form>
+    }
+    @let resultado = aba === 'vencidos' ? vencidos : aVencer;
+    @if (resultado.carregando) {
+      <p class="mensagem" role="status">Consultando lotes...</p>
+    } @else if (resultado.erro) {
+      <p class="mensagem" role="alert">{{ resultado.erro }}</p>
+    } @else if (!resultado.itens.length) {
+      <p class="mensagem">{{ aba === 'vencidos' ? 'Nenhum lote vencido.' : 'Nenhum lote a vencer nos próximos ' + diasConsultados + ' dias.' }}</p>
+    } @else {
+      <div class="tabela-container">
+        <table>
+          <thead><tr><th scope="col">Medicamento</th><th scope="col">Lote</th><th scope="col">Quantidade</th><th scope="col">Validade</th></tr></thead>
+          <tbody>
+            @for (item of resultado.itens; track item) {
+              <tr><td><a [routerLink]="['/medicamentos', item.medicamentoId]">{{ item.medicamentoNome }}</a></td><td>{{ item.lote }}</td><td>{{ item.quantidade }}</td><td>{{ item.validade | date:'dd/MM/yyyy' }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>
