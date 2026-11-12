@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, of } from 'rxjs';
+import { catchError, finalize, of } from 'rxjs';
 import { MedicamentoResponseDTO } from '../../../../core/models/medicamento.model';
 import { AlertaService } from '../../../../shared/services/alerta.service';
 import { CategoriaService } from '../../../categorias/services/categoria.service';
@@ -18,10 +18,11 @@ export class MedicamentoDetalhesComponent implements OnInit {
   categoria = '';
   carregando = true;
   erro = '';
-  secao: 'entrada' | 'baixa' | 'historico' | null = null;
+  secao: 'entrada' | 'baixa' | 'ajuste' | 'historico' | null = null;
   lote = '';
   validade = '';
   quantidade: number | null = null;
+  delta: number | null = null;
   salvando = false;
   carregandoHistorico = false;
   erroHistorico = '';
@@ -59,11 +60,12 @@ export class MedicamentoDetalhesComponent implements OnInit {
     });
   }
 
-  abrir(secao: 'entrada' | 'baixa' | 'historico'): void {
+  abrir(secao: 'entrada' | 'baixa' | 'ajuste' | 'historico'): void {
     this.secao = secao;
     this.lote = '';
     this.validade = '';
     this.quantidade = null;
+    this.delta = null;
     if (secao !== 'historico' || !this.medicamento || this.carregandoHistorico) return;
     this.carregandoHistorico = true;
     this.erroHistorico = '';
@@ -89,6 +91,19 @@ export class MedicamentoDetalhesComponent implements OnInit {
       (this.secao !== 'entrada' || !!this.validade);
   }
 
+  get ajusteValido(): boolean {
+    return this.delta !== null && Number.isInteger(this.delta) &&
+      this.delta >= -10 && this.delta <= 10 && this.delta !== 0;
+  }
+
+  incrementarDelta(): void {
+    this.delta = Math.min(10, (this.delta ?? 0) + 1);
+  }
+
+  decrementarDelta(): void {
+    this.delta = Math.max(-10, (this.delta ?? 0) - 1);
+  }
+
   registrar(): void {
     if (!this.medicamento || !this.movimentacaoValida || this.salvando ||
         this.quantidade === null || (this.secao !== 'entrada' && this.secao !== 'baixa')) return;
@@ -98,19 +113,47 @@ export class MedicamentoDetalhesComponent implements OnInit {
       ? this.medicamentos.registrarEntrada(this.medicamento.id, { ...dto, validade: this.validade })
       : this.medicamentos.registrarBaixa(this.medicamento.id, dto);
     this.salvando = true;
-    operacao.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    operacao.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.salvando = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
       next: medicamento => {
         this.medicamento = medicamento;
         this.secao = null;
-        this.salvando = false;
         this.alertas.sucesso('Movimentação registrada com sucesso.');
         this.cdr.detectChanges();
       },
       error: (erro: Error) => {
-        this.salvando = false;
         this.alertas.erro(erro.message);
-        this.cdr.detectChanges();
       }
     });
+  }
+
+  ajustar(): void {
+    if (!this.medicamento || !this.ajusteValido || this.salvando || this.delta === null) return;
+    this.salvando = true;
+    this.medicamentos.ajustarQuantidade(this.medicamento.id, this.delta)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.salvando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: medicamento => {
+          this.medicamento = medicamento;
+          this.secao = null;
+          this.delta = null;
+          this.alertas.sucesso('Estoque ajustado com sucesso.');
+          this.cdr.detectChanges();
+        },
+        error: (erro: Error) => {
+          this.alertas.erro(erro.message);
+        }
+      });
   }
 }

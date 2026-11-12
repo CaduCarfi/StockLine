@@ -1,0 +1,23 @@
+@use "../../../../shared/styles/consulta";
+
+.info-estoque {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  label {
+    min-width: 180px;
+  }
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}

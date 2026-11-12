@@ -1,0 +1,63 @@
+<h1 class="titulo">Registrar movimentação</h1>
+<section class="painel" aria-label="Formulário de movimentação">
+  <div class="filtros">
+    <label>Medicamento
+      <select [ngModel]="medicamentoId" (ngModelChange)="selecionarMedicamento($event)" [disabled]="carregandoMedicamentos || !!erroMedicamentos">
+        <option value="">Selecione um medicamento</option>
+        @for (med of medicamentos; track med.id) {
+          <option [value]="med.id">{{ med.nome }}</option>
+        }
+      </select>
+    </label>
+    <label>Tipo
+      <select [ngModel]="tipo" (ngModelChange)="mudarTipo($event)" [disabled]="!medicamentoSelecionado || carregandoDetalhes">
+        <option value="">Selecione o tipo</option>
+        <option value="ENTRADA">Entrada</option>
+        <option value="SAIDA">Saída</option>
+      </select>
+    </label>
+  </div>
+
+  @if (erroMedicamentos) {
+    <p class="mensagem" role="alert">{{ erroMedicamentos }}</p>
+  } @else if (carregandoMedicamentos || carregandoDetalhes) {
+    <p class="mensagem" role="status">Carregando...</p>
+  } @else if (!medicamentoId) {
+    <p class="mensagem">Selecione um medicamento para registrar uma movimentação.</p>
+  } @else if (medicamentoSelecionado && !tipo) {
+    <p class="info-estoque">Estoque atual de <strong>{{ medicamentoSelecionado.nome }}</strong>: <strong>{{ medicamentoSelecionado.quantidade }}</strong> unidades. Selecione o tipo de movimentação.</p>
+  } @else if (medicamentoSelecionado && tipo) {
+    <p class="info-estoque">Estoque atual de <strong>{{ medicamentoSelecionado.nome }}</strong>: <strong>{{ medicamentoSelecionado.quantidade }}</strong> unidades.</p>
+    <form (ngSubmit)="registrar()">
+      <div class="campos">
+        <label>Lote
+          @if (tipo === 'ENTRADA') {
+            <input name="lote" [(ngModel)]="lote" required [disabled]="salvando" placeholder="Código do lote" />
+          } @else {
+            @if (!lotesDisponiveis.length) {
+              <p class="mensagem">Nenhum lote com saldo disponível para saída.</p>
+            } @else {
+              <select name="lote" [(ngModel)]="lote" required [disabled]="salvando">
+                <option value="">Selecione um lote</option>
+                @for (item of lotesDisponiveis; track item.codigo) {
+                  <option [value]="item.codigo">{{ item.codigo }} — {{ item.saldo }} em estoque (val. {{ item.validade | date:'dd/MM/yyyy' }})</option>
+                }
+              </select>
+            }
+          }
+        </label>
+        @if (tipo === 'ENTRADA') {
+          <label>Validade
+            <input name="validade" type="date" [(ngModel)]="validade" required [disabled]="salvando" />
+          </label>
+        }
+        <label>Quantidade
+          <input name="quantidade" type="number" min="1" step="1" [(ngModel)]="quantidade" required [disabled]="salvando" />
+        </label>
+      </div>
+      <div class="acoes">
+        <button type="submit" [disabled]="salvando || !formValido">{{ salvando ? 'Registrando...' : 'Confirmar' }}</button>
+      </div>
+    </form>
+  }
+</section>

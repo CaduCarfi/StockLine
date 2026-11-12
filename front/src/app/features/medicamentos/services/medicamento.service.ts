@@ -60,4 +60,8 @@ export class MedicamentoService {
   consultarHistorico(id: string): Observable<Movimentacao[]> {
     return this.api.get<Movimentacao[]>(`/medicamentos/${id}/historico`);
   }
+
+  ajustarQuantidade(id: string, delta: number): Observable<MedicamentoResponseDTO> {
+    return this.api.patch<MedicamentoResponseDTO>(`/medicamentos/${id}/quantidade`, { delta });
+  }
 }
