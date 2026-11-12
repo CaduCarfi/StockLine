@@ -20,11 +20,10 @@ public class LoteService {
 
     public List<LoteVencimentoResponseDTO> buscarVencidos() {
         LocalDate hoje = LocalDate.now();
-        return repository.findByLotesValidadeBefore(hoje)
+        return repository.findAll()
                 .stream()
-                .filter(med -> med.getLotes() != null)
-                .flatMap(med -> med.getLotes().stream()
-                        .filter(lote -> lote.getValidade().isBefore(hoje))
+                .flatMap(med -> lotesEfetivos(med).stream()
+                        .filter(lote -> lote.getValidade() != null && lote.getValidade().isBefore(hoje))
                         .map(lote -> toDTO(med, lote)))
                 .toList();
     }
@@ -32,13 +31,25 @@ public class LoteService {
     public List<LoteVencimentoResponseDTO> buscarAVencer(int dias) {
         LocalDate hoje = LocalDate.now();
         LocalDate limite = hoje.plusDays(dias);
-        return repository.findByLotesValidadeBetween(hoje, limite)
+        return repository.findAll()
                 .stream()
-                .filter(med -> med.getLotes() != null)
-                .flatMap(med -> med.getLotes().stream()
-                        .filter(lote -> !lote.getValidade().isBefore(hoje) && !lote.getValidade().isAfter(limite))
+                .flatMap(med -> lotesEfetivos(med).stream()
+                        .filter(lote -> lote.getValidade() != null
+                                && !lote.getValidade().isBefore(hoje)
+                                && !lote.getValidade().isAfter(limite))
                         .map(lote -> toDTO(med, lote)))
                 .toList();
+    }
+
+    private List<Lote> lotesEfetivos(Medicamento med) {
+        if (med.getLotes() != null && !med.getLotes().isEmpty()) {
+            return med.getLotes();
+        }
+        if (med.getLote() != null && med.getValidade() != null) {
+            int saldo = med.getQuantidade() != null ? med.getQuantidade() : 0;
+            return List.of(new Lote(med.getLote(), med.getValidade(), saldo));
+        }
+        return List.of();
     }
 
     private LoteVencimentoResponseDTO toDTO(Medicamento med, Lote lote) {

@@ -1,4 +1,86 @@
 <div class="pagina">
   <h1 class="pagina__titulo">Alertas</h1>
-  <p class="pagina__placeholder">Em construção...</p>
+
+  <div *ngIf="carregando" class="mensagem-estado">Carregando...</div>
+
+  <ng-container *ngIf="!carregando">
+
+    <!-- Lotes Vencidos -->
+    <div class="secao">
+      <div class="secao__cabecalho secao__cabecalho--erro">
+
+        <h2 class="secao__titulo">Lotes Vencidos</h2>
+        <span class="badge badge--erro">{{ vencidos.length }}</span>
+      </div>
+
+      <div class="tabela-container" *ngIf="vencidos.length > 0; else semVencidos">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Medicamento</th>
+              <th>Lote</th>
+              <th>Quantidade</th>
+              <th>Validade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of vencidos">
+              <td>{{ item.medicamentoNome }}</td>
+              <td>{{ item.lote }}</td>
+              <td>{{ item.quantidade }}</td>
+              <td>{{ item.validade | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #semVencidos>
+        <p class="mensagem-vazia">Nenhum lote vencido.</p>
+      </ng-template>
+    </div>
+
+    <!-- Lotes a Vencer -->
+    <div class="secao">
+      <div class="secao__cabecalho secao__cabecalho--aviso">
+
+        <h2 class="secao__titulo">Lotes a Vencer</h2>
+        <span class="badge badge--aviso">{{ aVencer.length }}</span>
+        <div class="filtro-dias">
+          <label>Próximos</label>
+          <input
+            type="number"
+            [(ngModel)]="dias"
+            min="1"
+            max="365"
+            (change)="filtrarAVencer()"
+          />
+          <label>dias</label>
+        </div>
+      </div>
+
+      <div class="tabela-container" *ngIf="aVencer.length > 0; else semAVencer">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Medicamento</th>
+              <th>Lote</th>
+              <th>Quantidade</th>
+              <th>Validade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of aVencer">
+              <td>{{ item.medicamentoNome }}</td>
+              <td>{{ item.lote }}</td>
+              <td>{{ item.quantidade }}</td>
+              <td>{{ item.validade | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #semAVencer>
+        <p class="mensagem-vazia">Nenhum lote a vencer nos próximos {{ dias }} dias.</p>
+      </ng-template>
+    </div>
+
+  </ng-container>
 </div>
