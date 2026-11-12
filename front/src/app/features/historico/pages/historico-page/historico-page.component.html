@@ -10,10 +10,10 @@
       </select>
     </label>
     <label>Tipo de movimentação
-      <select [(ngModel)]="tipo" [disabled]="!movimentacoes.length">
+      <select [(ngModel)]="tipo" [disabled]="!medicamentoId || carregandoHistorico">
         <option value="">Todos</option>
         <option value="ENTRADA">Entrada</option>
-        <option value="BAIXA">Baixa</option>
+        <option value="BAIXA">Saída</option>
       </select>
     </label>
     @if (medicamentoId && !erroHistorico) {
@@ -38,7 +38,7 @@
           @for (item of filtradas; track item) {
             <tr>
               <td>{{ item.data | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td><span class="tipo" [class.tipo--entrada]="item.tipo === 'ENTRADA'" [class.tipo--saida]="item.tipo === 'BAIXA'">{{ item.tipo === 'ENTRADA' ? 'Entrada' : item.tipo === 'BAIXA' ? 'Baixa' : item.tipo }}</span></td>
+              <td><span class="tipo" [class.tipo--entrada]="item.tipo === 'ENTRADA'" [class.tipo--saida]="item.tipo === 'BAIXA'">{{ item.tipo === 'ENTRADA' ? 'Entrada' : item.tipo === 'BAIXA' ? 'Saída' : item.tipo }}</span></td>
               <td>{{ item.lote }}</td><td>{{ item.quantidade }}</td>
             </tr>
           }
