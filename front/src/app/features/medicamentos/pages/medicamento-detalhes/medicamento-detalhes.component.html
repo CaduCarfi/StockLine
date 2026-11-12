@@ -1,0 +1,99 @@
+<a class="voltar" routerLink="/medicamentos">← Voltar para medicamentos</a>
+<h1 class="titulo">{{ medicamento?.nome ?? 'Detalhes do medicamento' }}</h1>
+
+@if (carregando) {
+  <p role="status">Carregando medicamento...</p>
+} @else if (erro) {
+  <p role="alert">{{ erro }}</p>
+} @else if (medicamento; as med) {
+  <section class="painel" aria-labelledby="dados">
+    <h2 id="dados">Dados do medicamento</h2>
+    <dl class="dados">
+      <div><dt>Categoria</dt><dd>{{ categoria || '—' }}</dd></div>
+      <div><dt>Descrição</dt><dd>{{ med.descricao || '—' }}</dd></div>
+      <div><dt>Estoque total</dt><dd>{{ med.quantidade }}</dd></div>
+      <div><dt>Estoque mínimo</dt><dd>{{ med.estoqueMinimo ?? '—' }}</dd></div>
+    </dl>
+    @if (med.estoqueMinimo !== null) {
+      <p class="status-estoque" [class.status-estoque--baixo]="med.quantidade < med.estoqueMinimo">
+        {{ med.quantidade < med.estoqueMinimo ? 'Estoque abaixo do mínimo' :
+            med.quantidade === med.estoqueMinimo ? 'Estoque no limite mínimo' : 'Estoque acima do mínimo' }}
+      </p>
+    }
+    <div class="acoes">
+      <button type="button" [disabled]="salvando" (click)="abrir('entrada')">Registrar entrada</button>
+      <button type="button" [disabled]="salvando" (click)="abrir('baixa')">Registrar baixa</button>
+      <button type="button" [disabled]="salvando" (click)="abrir('historico')">Ver histórico</button>
+    </div>
+  </section>
+
+  @if (secao === 'entrada' || secao === 'baixa') {
+    <section class="painel">
+      <h2>{{ secao === 'entrada' ? 'Registrar entrada' : 'Registrar baixa' }}</h2>
+      <form (ngSubmit)="registrar()">
+        <div class="campos">
+          <label>Lote
+            @if (secao === 'entrada') {
+              <input name="lote" [(ngModel)]="lote" required [disabled]="salvando" />
+            } @else {
+              <select name="lote" [(ngModel)]="lote" required [disabled]="salvando">
+                <option value="">Selecione um lote</option>
+                @for (item of med.lotes ?? []; track item.codigo) {
+                  <option [value]="item.codigo" [disabled]="item.saldo === 0">{{ item.codigo }} ({{ item.saldo }} em estoque)</option>
+                }
+              </select>
+            }
+          </label>
+          @if (secao === 'entrada') {
+            <label>Validade <input name="validade" type="date" [(ngModel)]="validade" required [disabled]="salvando" /></label>
+          }
+          <label>Quantidade <input name="quantidade" type="number" min="1" step="1" [(ngModel)]="quantidade" required [disabled]="salvando" /></label>
+        </div>
+        <div class="acoes">
+          <button type="submit" [disabled]="salvando || !movimentacaoValida">{{ salvando ? 'Registrando...' : 'Confirmar' }}</button>
+          <button type="button" [disabled]="salvando" (click)="secao = null">Cancelar</button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="painel" aria-labelledby="lotes">
+    <h2 id="lotes">Lotes</h2>
+    <div class="tabela-container">
+      <table>
+        <thead><tr><th scope="col">Lote</th><th scope="col">Quantidade</th><th scope="col">Validade</th></tr></thead>
+        <tbody>
+          @for (item of med.lotes ?? []; track item.codigo) {
+            <tr><td>{{ item.codigo }}</td><td>{{ item.saldo }}</td><td>{{ item.validade | date:'dd/MM/yyyy' }}</td></tr>
+          } @empty {
+            <tr><td colspan="3">Nenhum lote cadastrado.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (secao === 'historico') {
+    <section class="painel" aria-labelledby="historico">
+      <h2 id="historico">Histórico de movimentações</h2>
+      @if (carregandoHistorico) {
+        <p role="status">Carregando movimentações...</p>
+      } @else if (erroHistorico) {
+        <p role="alert">{{ erroHistorico }}</p>
+      } @else {
+        <div class="tabela-container">
+          <table>
+            <thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Lote</th><th scope="col">Quantidade</th></tr></thead>
+            <tbody>
+              @for (item of historico; track $index) {
+                <tr><td>{{ item.data | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ item.tipo }}</td><td>{{ item.lote }}</td><td>{{ item.quantidade }}</td></tr>
+              } @empty {
+                <tr><td colspan="4">Nenhuma movimentação registrada.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+}
