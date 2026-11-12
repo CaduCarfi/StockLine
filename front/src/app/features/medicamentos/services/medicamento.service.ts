@@ -13,6 +13,18 @@ export interface MedicamentoForm {
   estoqueMinimo: number | null;
 }
 
+export interface Movimentacao {
+  tipo: string;
+  lote: string;
+  quantidade: number;
+  data: string;
+}
+
+interface MovimentacaoForm {
+  lote: string;
+  quantidade: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MedicamentoService {
   constructor(private api: ApiService) {}
@@ -35,5 +47,17 @@ export class MedicamentoService {
 
   excluir(id: string): Observable<void> {
     return this.api.delete<void>(`/medicamentos/${id}`);
+  }
+
+  registrarEntrada(id: string, dto: MovimentacaoForm & { validade: string }): Observable<MedicamentoResponseDTO> {
+    return this.api.post<MedicamentoResponseDTO>(`/medicamentos/${id}/entradas`, dto);
+  }
+
+  registrarBaixa(id: string, dto: MovimentacaoForm): Observable<MedicamentoResponseDTO> {
+    return this.api.post<MedicamentoResponseDTO>(`/medicamentos/${id}/baixas`, dto);
+  }
+
+  consultarHistorico(id: string): Observable<Movimentacao[]> {
+    return this.api.get<Movimentacao[]>(`/medicamentos/${id}/historico`);
   }
 }
