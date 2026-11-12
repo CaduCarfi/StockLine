@@ -93,7 +93,7 @@
           *ngFor="let med of medicamentosFiltrados"
           [ngClass]="classeLinha(med)"
         >
-          <td>{{ med.nome }}</td>
+          <td><a class="link-detalhes" [routerLink]="[med.id]">{{ med.nome }}</a></td>
           <td>{{ categorias.get(med.categoriaId) || '—' }}</td>
           <td>{{ med.lote }}</td>
           <td>

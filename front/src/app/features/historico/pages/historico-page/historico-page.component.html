@@ -1,4 +1,49 @@
-<div class="pagina">
-  <h1 class="pagina__titulo">Histórico</h1>
-  <p class="pagina__placeholder">Em construção...</p>
-</div>
+<h1 class="titulo">Histórico de movimentações</h1>
+<section class="painel" aria-label="Consulta de movimentações">
+  <div class="filtros">
+    <label>Medicamento
+      <select [ngModel]="medicamentoId" (ngModelChange)="selecionarMedicamento($event)" [disabled]="carregandoMedicamentos || !!erroMedicamentos">
+        <option value="">Selecione um medicamento</option>
+        @for (med of medicamentos; track med.id) {
+          <option [value]="med.id">{{ med.nome }}</option>
+        }
+      </select>
+    </label>
+    <label>Tipo de movimentação
+      <select [(ngModel)]="tipo" [disabled]="!movimentacoes.length">
+        <option value="">Todos</option>
+        <option value="ENTRADA">Entrada</option>
+        <option value="BAIXA">Baixa</option>
+      </select>
+    </label>
+    @if (medicamentoId && !erroHistorico) {
+      <a [routerLink]="['/medicamentos', medicamentoId]">Ver detalhes do medicamento</a>
+    }
+  </div>
+  @if (erroMedicamentos || erroHistorico) {
+    <p class="mensagem" role="alert">{{ erroMedicamentos || erroHistorico }}</p>
+  } @else if (carregandoMedicamentos || carregandoHistorico) {
+    <p class="mensagem" role="status">Carregando...</p>
+  } @else if (!medicamentos.length) {
+    <p class="mensagem">Nenhum medicamento cadastrado.</p>
+  } @else if (!medicamentoId) {
+    <p class="mensagem">Selecione um medicamento para consultar as movimentações.</p>
+  } @else if (!filtradas.length) {
+    <p class="mensagem">{{ tipo ? 'Sem movimentações do tipo selecionado.' : 'Sem movimentações.' }}</p>
+  } @else {
+    <div class="tabela-container">
+      <table>
+        <thead><tr><th scope="col">Data e hora</th><th scope="col">Tipo</th><th scope="col">Lote</th><th scope="col">Quantidade</th></tr></thead>
+        <tbody>
+          @for (item of filtradas; track item) {
+            <tr>
+              <td>{{ item.data | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td><span class="tipo" [class.tipo--entrada]="item.tipo === 'ENTRADA'" [class.tipo--saida]="item.tipo === 'BAIXA'">{{ item.tipo === 'ENTRADA' ? 'Entrada' : item.tipo === 'BAIXA' ? 'Baixa' : item.tipo }}</span></td>
+              <td>{{ item.lote }}</td><td>{{ item.quantidade }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

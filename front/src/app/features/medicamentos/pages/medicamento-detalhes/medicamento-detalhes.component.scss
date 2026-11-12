@@ -1,0 +1,77 @@
+.voltar {
+  display: inline-block;
+  color: var(--color-primary);
+  text-decoration: underline;
+  margin-bottom: 12px;
+}
+
+.titulo {
+  color: var(--color-primary);
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.painel {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  margin-bottom: 16px;
+
+  h2 {
+    color: var(--color-primary);
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+}
+
+.dados, .campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 12px;
+}
+
+dt, label { color: var(--color-text-muted); }
+dd { font-weight: 600; overflow-wrap: anywhere; }
+
+input, select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.status-estoque {
+  margin-top: 12px;
+  font-weight: 600;
+  &--baixo { color: #92400e; }
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+
+  button {
+    padding: 8px 12px;
+    border: 1px solid var(--color-primary);
+    border-radius: 6px;
+    background: var(--color-primary);
+    color: #fff;
+    &:disabled { opacity: 0.55; cursor: default; }
+  }
+}
+
+.tabela-container { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  th, td { padding: 10px 12px; text-align: left; }
+  th { color: #fff; background: var(--color-primary); }
+  td { border-bottom: 1px solid #f1f5f9; }
+}
