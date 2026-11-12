@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "edec7514-d8a2-4ba0-9b4e-635b59514346"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -77,7 +78,35 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest",
+            "setupFiles": ["src/test-setup.ts"],
+            "coverageReporters": [
+              "text",
+              "text-summary",
+              "lcov",
+              "html"
+            ],
+            "coverageExclude": [
+              "**/*.spec.ts",
+              "**/*.module.ts",
+              "**/*-module.ts",
+              "**/*-routing.module.ts",
+              "src/main.ts",
+              "src/test-setup.ts",
+              "**/core/models/**",
+              "**/features/**/*-routing.module.ts",
+              "**/layout/navbar/**"
+            ],
+            "coverageThresholds": {
+              "statements": 70,
+              "branches": 70,
+              "functions": 70,
+              "lines": 70
+            }
+          }
         }
       }
     }
