@@ -71,6 +71,7 @@ public class MedicamentoController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Consulta o histórico de movimentações do medicamento")
     @GetMapping("/{id}/historico")
     public ResponseEntity<List<Movimentacao>> consultarHistorico(@PathVariable String id) {
         return ResponseEntity.ok(service.consultarHistorico(id));
