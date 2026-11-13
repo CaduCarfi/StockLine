@@ -72,12 +72,29 @@ export class MedicamentosPageComponent implements OnInit {
     return this.medicamentos.filter(m => m.nome.toLowerCase().includes(termo));
   }
 
+  validadeMaisProxima(med: MedicamentoResponseDTO): string {
+    if (med.lotes?.length) {
+      return med.lotes
+        .map(l => l.validade)
+        .filter(Boolean)
+        .sort()[0] ?? '';
+    }
+    return med.validade ?? '';
+  }
+
+  lotesResumo(med: MedicamentoResponseDTO): string {
+    if (med.lotes?.length) {
+      return med.lotes.length === 1 ? med.lotes[0].codigo : `${med.lotes.length} lotes`;
+    }
+    return med.lote ?? '—';
+  }
+
   estaVencido(validade: string): boolean {
-    return validade < this.hoje;
+    return !!validade && validade < this.hoje;
   }
 
   estaProximoVencimento(validade: string): boolean {
-    return validade >= this.hoje && validade <= this.limite30;
+    return !!validade && validade >= this.hoje && validade <= this.limite30;
   }
 
   estoqueAbaixoMinimo(med: MedicamentoResponseDTO): boolean {
@@ -86,8 +103,9 @@ export class MedicamentosPageComponent implements OnInit {
   }
 
   classeLinha(med: MedicamentoResponseDTO): string {
-    if (this.estaVencido(med.validade)) return 'linha--vencido';
-    if (this.estaProximoVencimento(med.validade)) return 'linha--vencimento-proximo';
+    const validade = this.validadeMaisProxima(med);
+    if (this.estaVencido(validade)) return 'linha--vencido';
+    if (this.estaProximoVencimento(validade)) return 'linha--vencimento-proximo';
     if (this.estoqueAbaixoMinimo(med)) return 'linha--estoque-baixo';
     return '';
   }

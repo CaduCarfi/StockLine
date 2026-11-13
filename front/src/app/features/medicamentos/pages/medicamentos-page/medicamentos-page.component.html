@@ -95,7 +95,7 @@
         >
           <td><a class="link-detalhes" [routerLink]="[med.id]">{{ med.nome }}</a></td>
           <td>{{ categorias.get(med.categoriaId) || '—' }}</td>
-          <td>{{ med.lote }}</td>
+          <td>{{ lotesResumo(med) }}</td>
           <td>
             {{ med.quantidade }}
             <span
@@ -106,10 +106,10 @@
           </td>
           <td>{{ med.estoqueMinimo ?? '—' }}</td>
           <td>
-            {{ med.validade | date:'dd/MM/yyyy' }}
-            <span *ngIf="estaVencido(med.validade)" class="badge badge--erro">vencido</span>
+            {{ validadeMaisProxima(med) | date:'dd/MM/yyyy' }}
+            <span *ngIf="estaVencido(validadeMaisProxima(med))" class="badge badge--erro">vencido</span>
             <span
-              *ngIf="!estaVencido(med.validade) && estaProximoVencimento(med.validade)"
+              *ngIf="!estaVencido(validadeMaisProxima(med)) && estaProximoVencimento(validadeMaisProxima(med))"
               class="badge badge--aviso"
             >próximo</span>
           </td>
