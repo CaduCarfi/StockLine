@@ -22,7 +22,7 @@
     }
     <div class="acoes">
       <button type="button" [disabled]="salvando" (click)="abrir('entrada')">Registrar entrada</button>
-      <button type="button" [disabled]="salvando" (click)="abrir('baixa')">Registrar baixa</button>
+      <button type="button" [disabled]="salvando" (click)="abrir('baixa')">Registrar saída</button>
       <button type="button" [disabled]="salvando" (click)="abrir('ajuste')">Ajustar estoque</button>
       <button type="button" [disabled]="salvando" (click)="abrir('historico')">Ver histórico</button>
     </div>
@@ -60,7 +60,7 @@
 
   @if (secao === 'entrada' || secao === 'baixa') {
     <section class="painel">
-      <h2>{{ secao === 'entrada' ? 'Registrar entrada' : 'Registrar baixa' }}</h2>
+      <h2>{{ secao === 'entrada' ? 'Registrar entrada' : 'Registrar saída' }}</h2>
       <form (ngSubmit)="registrar()">
         <div class="campos">
           <label>Lote
@@ -117,7 +117,12 @@
             <thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Lote</th><th scope="col">Quantidade</th></tr></thead>
             <tbody>
               @for (item of historico; track $index) {
-                <tr><td>{{ item.data | date:'dd/MM/yyyy HH:mm' }}</td><td>{{ item.tipo }}</td><td>{{ item.lote }}</td><td>{{ item.quantidade }}</td></tr>
+                <tr>
+                  <td>{{ item.data | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td><span class="tipo" [class.tipo--entrada]="item.tipo === 'ENTRADA'" [class.tipo--saida]="item.tipo === 'BAIXA'">{{ item.tipo === 'ENTRADA' ? 'Entrada' : item.tipo === 'BAIXA' ? 'Saída' : item.tipo }}</span></td>
+                  <td>{{ item.lote }}</td>
+                  <td>{{ item.quantidade }}</td>
+                </tr>
               } @empty {
                 <tr><td colspan="4">Nenhuma movimentação registrada.</td></tr>
               }
